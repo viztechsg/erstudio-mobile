@@ -1,0 +1,1 @@
+export const API_V1_URL = "https://id-studio.herokuapp.com/api/V1";
