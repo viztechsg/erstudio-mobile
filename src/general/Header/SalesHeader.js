@@ -72,14 +72,9 @@ export const salesViewOption = ({ navigation }) => {
         headerRight: props => {
             return (
                 <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('SalesEdit', { item: navigation.getParam('item') })}>
                         <View style={{ width: 60, alignItems:'center', justifyContent:'center' }}>
                             <Icon name="edit" size={20} color='white' style={{ marginRight: 15 }} />
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity>
-                        <View style={{ width: 60 , alignItems:'center', justifyContent:'center' }}>
-                            <Icon name="delete" size={20} color='white' style={{ marginRight: 15 }} />
                         </View>
                     </TouchableOpacity>
                 </View>

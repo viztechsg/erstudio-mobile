@@ -16,8 +16,9 @@ const TextFieldWithIcon = ({children,value,onChange,...props}) => {
                     <Icon style={styles.searchIcon} name={props.iconName} size={20} color="#000" />
                 }
                 <TextInput
-                    // textContentType={'password'}
+                    keyboardType={props.keyboardType ? props.keyboardType : 'default'} 
                     secureTextEntry={props.hidden}
+                    autoCapitalize={props.autoCapitalize ? props.autoCapitalize : ''}
                     style={styles.input}
                     placeholder={props.placeholder}
                     underlineColorAndroid="transparent"

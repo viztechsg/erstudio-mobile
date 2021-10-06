@@ -12,10 +12,10 @@ const homeOption = ({ navigation }) => ({
     ),
     headerRight: () => (
         <View style={{flexDirection:'row'}}>
-            <TouchableOpacity onPress={() => navigation.navigate('List')}>
+            <TouchableOpacity>
                 <Icon name="bells" size={30} color='white' style={{ marginRight: 15 }} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('List')}>
+            <TouchableOpacity >
                 <Icon name="setting" size={30} color='white' style={{ marginRight: 15 }} />
             </TouchableOpacity>
         </View>

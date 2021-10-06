@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState, memo } from "react";
 import {
     Text,
     View,
@@ -9,11 +9,32 @@ import {
     from "react-native";
 import { Card, Badge } from 'react-native-elements';
 import moment from 'moment';
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/AntDesign';
 const SalesItem = props => {
 
+    let textLabel = 'Quotation';
+    let iconProvider = 'icon1';
+    let icon = '';
+    let iconColor = 'orange'
+
+    if (props.item.lead.quotations.length < 1 && props.item.lead.quotations.customer_sign == null) {
+        icon = 'error-outline'
+    }
+    else if(props.item.lead.quotations.length > 0 && props.item.lead.quotations.customer_sign == null)
+    {
+        icon = 'error-outline'
+    }
+    else if(props.item.lead.quotations.length > 0 && props.item.lead.quotations.customer_sign)
+    {
+        icon = 'checkcircleo'
+        iconColor = 'green'
+        iconProvider = 'icon2'
+    }
+
     return (
-        
-        <TouchableOpacity onPress={() => props.onViewPress() }>
+
+        <TouchableOpacity onPress={() => props.onViewPress()}>
             <View style={styles.wrapper}>
                 <View style={styles.col_1}>
                     <Text style={{ color: 'black', fontSize: 12 }}>
@@ -25,7 +46,7 @@ const SalesItem = props => {
                     <View style={{ flexDirection: 'row', marginTop: 5, width: '100%', }}>
                         <View style={{ alignItems: 'flex-start', width: '35%' }}>
                             <Text style={{ color: 'black', fontSize: 12 }}>
-                                {props.item.lead?.property_type}
+                                {props.item.lead?.property_type.name}
                             </Text>
                         </View>
                         <View style={{ alignItems: 'flex-end', width: '70%' }}>
@@ -37,11 +58,17 @@ const SalesItem = props => {
 
                 </View>
                 <View style={styles.col_2}>
-                    <Badge
-                        status={(props.item.status == "successful") ? "success" : "warning"}
-                        containerStyle={{}}
-                        value={<Text style={{ color: 'white', margin: 15, fontSize: 12, textTransform:"capitalize" }}>{props.item.status}</Text>}
-                    />
+                    <View style={{ flexDirection: 'row', justifyContent:'space-around' }}>
+                        <View style={{ backgroundColor: 'black', borderRadius: 50, paddingVertical:2, paddingHorizontal:8, width:90, alignItems:'center',marginRight:5 }}>
+                            <Text style={{ color: 'white',fontSize: 12, textTransform: "capitalize" }}>{textLabel}</Text>
+                        </View>
+                        <View style={{ backgroundColor: 'black', borderRadius: 10 }}>
+                            {
+                                (iconProvider == 'icon1') ? <Icon1 name={icon} size={20} color={iconColor} /> : <Icon2 name={icon} size={20} color={iconColor} />
+                            }
+                        </View>
+                    </View>
+
                     <Text style={{ color: 'grey', fontSize: 10 }}>
                         Date created: {moment(props.item.created_at).format('YYYY-MM-DD')}
                     </Text>
@@ -74,4 +101,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default SalesItem;
+export default memo(SalesItem);

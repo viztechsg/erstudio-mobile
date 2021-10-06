@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "erstudio-staging-phase1",
+    "name": "ERStudio App",
     "slug": "erstudio-staging-phase1",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#f3f3f3"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -17,14 +17,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSRemindersUsageDescription": "This app uses the CALENDAR to store appointment reminder."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#f3f3f3"
       },
-      "package": "com.stevangd.erstudiostagingphase1"
+      "package": "com.stevangd.erstudiostagingphase1",
+      "permissions": [
+        "READ_CALENDAR",
+        "WRITE_CALENDAR",
+        "REMINDERS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

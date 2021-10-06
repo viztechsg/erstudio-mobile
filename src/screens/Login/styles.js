@@ -16,7 +16,8 @@ export default StyleSheet.create({
     logoImg: {
         width: 200, 
         height: 200, 
-        marginTop: -100
+        marginTop: -100,
+        resizeMode:'contain'
     },
     container: {
         flex: 1,
@@ -28,7 +29,19 @@ export default StyleSheet.create({
         flexDirection: 'row', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        padding: 15
+        padding: 15,
+    },
+    labelLogo: {
+        flexDirection: 'row', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        fontSize:8,
+        paddingBottom:15
+    },
+    logoText: {
+        color: '#707070', 
+        fontSize: 18, 
+        letterSpacing: 5
     },
     loginText: {
         color: '#707070', 

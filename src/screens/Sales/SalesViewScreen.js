@@ -15,7 +15,7 @@ import Accordion from 'react-native-collapsible/Accordion';
 import QuoAgree from '../../components/Sales/QuoAgree';
 import Icon2 from 'react-native-vector-icons/SimpleLineIcons';
 import { getSingleProject } from '../../services/sales';
-
+import WorkSchedule from '../../components/Sales/WorkSchedule';
 
 const SalesViewScreen = ({ navigation }) => {
     const { item } = navigation.state.params;
@@ -23,7 +23,7 @@ const SalesViewScreen = ({ navigation }) => {
     const [visible, setVisible] = useState(false);
     const [selectedValue, setSelectedValue] = useState("java");
     const [defaultLabel, setDefaultLabel] = useState("Start Date");
-
+    const [remarks, setRemarks] = useState([]);
     const [projectData, setProjectData] = useState([]);
 
     const [date, setDate] = useState(new Date(1598051730000));
@@ -36,10 +36,13 @@ const SalesViewScreen = ({ navigation }) => {
             content: (
                 <View>
                     {
-                        item.lead.quotations.map((item,index) => {
+                        item.lead.quotations.map((item, index) => {
                             return <QuoAgree item={item} key={++index} onViewPress={() => navigation.navigate('SalesViewDocument')} />
                         })
                     }
+                    <TouchableOpacity onPress={() => navigation.navigate('SalesViewDocument')}>
+                        <Text style={{ fontSize: 16, color: '#57ADD2' }}>Agreement 001 </Text>
+                    </TouchableOpacity>
                 </View>
             ),
         },
@@ -83,9 +86,26 @@ const SalesViewScreen = ({ navigation }) => {
         );
     };
 
+    const initData = () => {
+        getSingleProject(item.id).then((data) => {
+            setProjectData(data)
+            setRemarks([]);
+            rebuildRemarkObject(data.remarks);
+        });
+    }
+
     useEffect(() => {
-        getSingleProject(item.id).then((data) => setProjectData(data));
+        initData();
+        navigation.setParams({
+            item: item,
+        });
     }, [item.id])
+
+    useEffect(() => {
+        navigation.addListener('willFocus', () => {
+            initData();
+        });
+    }, [navigation, item.id]);
 
     const _renderContent = section => {
         return (
@@ -99,28 +119,24 @@ const SalesViewScreen = ({ navigation }) => {
         setActiveSections(sections.includes(undefined) ? [] : sections);
     };
 
-
-    const toggleOverlay = () => {
-        setVisible(!visible);
-    };
-
-    const onChange = (event, selectedDate) => {
-        const currentDate = selectedDate || date;
-        setShow(Platform.OS === 'ios');
-        setDate(currentDate);
-        setDefaultLabel(currentDate);
-    };
-
-    console.log(item)
-
     const showMode = (currentMode) => {
         setShow(true);
         setMode(currentMode);
     };
 
-    const showDatepicker = () => {
-        showMode('date');
+    const rebuildRemarkObject = (data) => {
+        data.map((value) => {
+            setRemarks((oldValue) => [
+                ...oldValue,
+                {
+                    time: moment(value.created_at).format('DD/MM/YYYY'),
+                    title: value.title,
+                },
+            ]);
+        });
     };
+
+
     return (
         <View style={{
             flex: 1,
@@ -129,98 +145,9 @@ const SalesViewScreen = ({ navigation }) => {
             //padding: 20,
             backgroundColor: '#F3F3F3',
         }}>
-            <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%' }}>
-                <View>
-                    <Text style={{ fontSize: 20, color: 'grey' }}>Appointment Details</Text>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Date</Text>
-                        <TouchableOpacity onPress={showDatepicker}>
-                            <Picker
-                                style={{
-                                    height: 50,
-                                }}
-                            >
-                                <Picker.Item label={"Select date"} value="null" />
-                            </Picker>
-                        </TouchableOpacity>
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Time</Text>
-                        <Picker
-                            selectedValue="Select"
-                            style={{
-                                height: 50,
-                            }}
-                        >
-                            <Picker.Item label="Select" value="Select" />
-                        </Picker>
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Venue</Text>
-                        <TextInput style={{ borderColor: '#f3f3f3', height: 40, borderRadius: 5, borderWidth: 1, padding: 5 }} />
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Client Name</Text>
-                        <TextInput style={{ borderColor: '#f3f3f3', height: 40, borderRadius: 5, borderWidth: 1, padding: 5 }} />
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Sales Name</Text>
-                        <TextInput style={{ borderColor: '#f3f3f3', height: 40, borderRadius: 5, borderWidth: 1, padding: 5 }} />
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Leads ID</Text>
-                        <TextInput style={{ borderColor: '#f3f3f3', height: 40, borderRadius: 5, borderWidth: 1, padding: 5 }} />
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <View style={{ flexDirection: 'row' }}>
-                            <View style={{ width: '20%' }}>
-                                <CheckBox />
-                            </View>
-                            <View style={{ width: '80%', justifyContent: 'center' }}>
-                                <Text style={{ fontSize: 12, color: 'grey' }}>Create an event on Google Calendar</Text>
-                            </View>
-                        </View>
-                    </View>
-                    <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <DefaultButton onPress={() => console.log('Button pressed')} textButton="SAVE DETAILS" />
-                    </View>
-                </View>
-            </Overlay>
             <View style={{ flexDirection: 'row', padding: 20 }}>
                 <View style={{ width: '50%' }}>
-                    <Text style={{ fontSize: 20 }}>Project: {item.client_name}</Text>
+                    <Text style={{ fontSize: 20 }}>Project: {projectData?.client_name}</Text>
                 </View>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -228,68 +155,83 @@ const SalesViewScreen = ({ navigation }) => {
                     <View style={styles.row}>
                         <View style={{ width: '50%' }}>
                             <Text style={styles.label}>Project ID</Text>
-                            <Text style={{ fontSize: 14 }}>{projectData.project_no}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData?.project_no}</Text>
                         </View>
                         <View style={{ width: '50%' }}>
                             <Text style={styles.label}>Project created on</Text>
-                            <Text style={{ fontSize: 14 }}>{moment(projectData.created_at).format("YYYY/MM/DD")}</Text>
+                            <Text style={{ fontSize: 14 }}>{moment(projectData?.created_at).format("YYYY/MM/DD")}</Text>
                         </View>
 
                     </View>
                     <View style={styles.row}>
                         <View style={{ width: '50%' }}>
                             <Text style={styles.label}>Source</Text>
-                            <Text style={{ fontSize: 14 }}>{item.source}</Text>
+                            <Text style={{ fontSize: 14 }}>{item.lead.runner_no}</Text>
                         </View>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Assigned To</Text>
-                            <Text style={{ fontSize: 14 }}>Gilbert Teo</Text>
+                            <Text style={{ fontSize: 14 }}>{item.lead.direct_salesman?.name}</Text>
                         </View>
                     </View>
                     <View style={styles.row}>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Client Name</Text>
-                            <Text style={{ fontSize: 14 }}>{item.client_name}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData?.client_name}</Text>
                         </View>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>IC Number</Text>
-                            <Text style={{ fontSize: 14 }}>{projectData.ic_number}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData?.ic_number}</Text>
                         </View>
                     </View>
                     <View style={styles.row}>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Contact Number</Text>
-                            <Text style={{ fontSize: 14 }}>{projectData.contact_number}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData?.contact_number}</Text>
                         </View>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Email</Text>
-                            <Text style={{ fontSize: 14 }}>{item.email}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData?.email}</Text>
                         </View>
                     </View>
                     <View style={styles.row}>
                         <View style={{ width: '50%' }}>
                             <Text style={styles.label}>Property Type</Text>
-                            <Text style={{ fontSize: 14 }}>HDB</Text>
+                            <Text style={{ fontSize: 14 }}>{item.lead.property_type.name}</Text>
                         </View>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Address</Text>
-                            <Text style={{ fontSize: 14 }}>{item.postal_code ? item.postal_code : "-"}</Text>
-                            <Text style={{ fontSize: 14 }}>{item.residence ? item.residence : "-"}</Text>
-                            <Text style={{ fontSize: 14 }}>{item.road_name ? item.road_name : "-"}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData.postal_code ? projectData.postal_code : "-"}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData.residence ? projectData.residence : "-"}</Text>
+                            <Text style={{ fontSize: 14 }}>{projectData.road_name ? projectData.road_name : "-"}</Text>
                         </View>
                     </View>
                     {/* Appointment */}
-                    <View style={{marginHorizontal:-10, marginBottom:5}}>
-                        <View style={{ paddingHorizontal: 10,padding:20, marginTop: -15 }}>
+                    <View style={{ marginHorizontal: -10, marginBottom: 5 }}>
+                        <View style={{ paddingHorizontal: 10, padding: 20, marginTop: -15 }}>
                             <Text style={styles.label}>Work Schedule</Text>
                         </View>
-                        <View style={{ backgroundColor: '#B9B9B9', alignItems: 'center', justifyContent: 'center', height: 30, marginTop: -10 }}>
-                            <Text style={{ color: '#808080' }}>No work schedule made</Text>
-                        </View>
-                        <View style={{ backgroundColor: 'white', height: 45, marginTop: 5, paddingHorizontal: 10, flexDirection: 'row' }}>
-                            <View style={{ width: '50%', justifyContent:'center' }}>
-                                <Text style={{ color: 'black' }}>Work Schedule</Text>
-                            </View>
+                        {
+                            (projectData.work_schedules && projectData.work_schedules.length < 1) &&
+                            (
+                                <View
+                                    style={{
+                                        backgroundColor: '#B9B9B9',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: 30,
+                                        marginTop: -10,
+                                    }}
+                                >
+                                    <Text style={{ color: '#808080' }}>No work schedules made</Text>
+                                </View>
+                            )
+                        }
+                        <View style={{ flexDirection: 'column' }}>
+                            {
+                                projectData.work_schedules && projectData.work_schedules.map((item, index) => {
+                                    return (<WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />)
+                                })
+                            }
                         </View>
                     </View>
 
@@ -305,30 +247,63 @@ const SalesViewScreen = ({ navigation }) => {
                     </View>
 
                 </View>
-                <View style={{
-                    backgroundColor: 'white', padding: 30, margin: -20, marginTop: 5, marginBottom: 10
-                }}>
-                    <View style={{ flexDirection: 'row' }}>
-                        <View style={{ width: '50%' }}>
-                            <Text style={{ marginTop: -20, marginLeft: 10 }}>Remark</Text>
-                        </View>
-                        <View style={{ width: '50%', alignItems: 'flex-end' }}>
-                            <Text style={{ marginTop: -20, marginLeft: 10, fontSize: 13, }}>View Details <Icon2 name="arrow-right" size={13} /></Text>
-                        </View>
+                <View style={{ flexDirection: 'row' }}>
+                    <View style={{ width: '50%' }}>
+                        <Text style={{ marginLeft: 20}}>Remarks</Text>
                     </View>
-
-                    <Timeline
-                        style={styles.list}
-                        data={data.leadRemakrs}
-                        circleSize={10}
-                        circleColor='grey'
-                        lineColor='grey'
-                        timeContainerStyle={{ minWidth: 93 }}
-                        timeStyle={{ textAlign: 'center', color: 'grey', marginTop: -5, marginBottom: 10 }}
-                        titleStyle={{ textAlign: 'left', color: 'grey', marginTop: -15, fontWeight: '100', fontSize: 14, marginBottom: 10 }}
-                        innerCircle={'dot'}
-                    />
                 </View>
+                {
+                    remarks.length > 0 ?
+                        (
+                            <View
+                                style={{
+                                    backgroundColor: 'white',
+                                    paddingHorizontal: 50,
+                                    margin: -20,
+                                    marginTop: 15,
+                                    marginBottom: 1,
+                                    paddingBottom: 5,
+                                    paddingTop: 10,
+                                }}>
+                                <Timeline
+                                    style={styles.list}
+                                    data={remarks}
+                                    circleSize={10}
+                                    circleColor="grey"
+                                    lineColor="grey"
+                                    timeContainerStyle={{ minWidth: 93 }}
+                                    listViewContainerStyle={{ paddingTop: 10 }}
+                                    timeStyle={{
+                                        textAlign: 'center',
+                                        color: 'grey',
+                                        marginTop: -5,
+                                        marginBottom: 10,
+                                    }}
+                                    titleStyle={{
+                                        textAlign: 'left',
+                                        color: 'grey',
+                                        marginTop: -15,
+                                        fontWeight: '100',
+                                        fontSize: 14,
+                                        marginBottom: 10,
+                                    }}
+                                    innerCircle={'dot'}
+                                />
+
+                            </View>
+                        ) :
+                        (
+                            <View
+                                style={{
+                                    backgroundColor: '#B9B9B9',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: 30,
+                                }}>
+                                <Text style={{ color: '#808080' }}>No remark yet</Text>
+                            </View>
+                        )
+                }
             </ScrollView>
 
         </View>

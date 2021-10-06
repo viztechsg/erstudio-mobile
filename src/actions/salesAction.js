@@ -15,6 +15,7 @@ export function getSalesData(status = '', start_date = '', end_date = '') {
                 dispatch(setDataState(data.data.data.items));
             })
             .catch((error) => {
+                console.log(error.response);
                 return {
                     type: "SET_ERROR_DATE_STATE_SALES",
                     payload: error
@@ -60,10 +61,8 @@ export function createSalesProject(params) {
             .then((data) => {
                 Alert.alert("Create Project", data.data.message);
             })
-            .then(() => {
-                getSalesData();
-            })
             .catch((error) => {
+                console.log(error.response)
                 Alert.alert("Create Project Error", error.response.message);
                 return {
                     type: "SET_ERROR_DATE_STATE",
@@ -98,9 +97,6 @@ export function updateSalesProject(params,project_id) {
             })
             .then((data) => {
                 Alert.alert("Update Project", "Success");
-            })
-            .then(() => {
-                getSalesData();
             })
             .catch((error) => {
                 Alert.alert("Update Project Error", error.response.message);

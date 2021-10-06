@@ -8,7 +8,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { logout } from './src/actions/authAction';
 //Navigation
 import { createAppContainer, createSwitchNavigator } from 'react-navigation';
-import { createStackNavigator } from 'react-navigation-stack';
+import { createStackNavigator, HeaderBackButton } from 'react-navigation-stack';
 import { createDrawerNavigator, DrawerItems } from 'react-navigation-drawer';
 //Screenns
 import HomeScreen from './src/screens/Home/HomeScreen';
@@ -20,7 +20,7 @@ import HomeScreen2 from './src/screens/Home/HomScreen2';
 import SalesListScreen from './src/screens/Sales/SalesListScreen'
 //Custome Header
 import homeOption from './src/general/Header/HomeHeader';
-import { leadsOption, leadsViewOption } from './src/general/Header/LeadsHeader';
+import { leadsEditOption, leadsOption, leadsViewOption } from './src/general/Header/LeadsHeader';
 import { salesOption, salesViewOption, salesViewDocumentOption } from './src/general/Header/SalesHeader';
 import LeadEditScreen from './src/screens/Lead/LeadEditScreen';
 import LeadRemarkScreen from './src/screens/Lead/LeadRemarkScreen';
@@ -80,7 +80,8 @@ const MarketingStack = createStackNavigator(
   {
     List: {
       screen: LeadListScreen,
-      navigationOptions: leadsOption
+      navigationOptions: leadsOption,
+      params : {filterStatus : '', needAttention: ''}
     },
     LeadCreation: {
       screen: LeadCreateScreen,
@@ -99,18 +100,7 @@ const MarketingStack = createStackNavigator(
     },
     LeadEdit: {
       screen: LeadEditScreen,
-      navigationOptions: {
-        title: '',
-        headerTintColor: 'white',
-        headerStyle: {
-          backgroundColor: 'black',
-          shadowOpacity: 0.25,
-          shadowOffset: {
-            height: 1,
-          },
-          shadowRadius: 5,
-        },
-      }
+      navigationOptions: leadsEditOption
     },
     LeadRemark: {
       screen: LeadRemarkScreen,

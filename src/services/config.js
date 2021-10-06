@@ -24,3 +24,59 @@ export const getConditionTypes = () => {
     .then((data) => {return data.data})
     .catch(err => console.log(err));
 }
+
+
+export const getRemarkSource = () => {
+    return api.get('/get-remarks-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getVenueSource = () => {
+    return api.get('/get-venue-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getCountryCodeSource = () => {
+    return api.get('/get-country-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getVendorSource = () => {
+    return api.get('/get-vendor-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getSowSource = () => {
+    return api.get('/get-sow-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}

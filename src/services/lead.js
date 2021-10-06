@@ -8,8 +8,8 @@ export function leadList() {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
-    }) .then(response =>{return response.data.data.lead})
-    .catch(err => console.log(err));
+    }).then(response => { return response.data.data.lead })
+        .catch(err => console.log(err));
 }
 
 export function leadRemark(lead_id) {
@@ -17,8 +17,8 @@ export function leadRemark(lead_id) {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
-    }) .then(response =>{return response.data.data})
-    .catch(err => console.log(err));
+    }).then(response => { return response.data.data })
+        .catch(err => console.log(err));
 }
 
 export function singleLead(lead_id) {
@@ -26,101 +26,132 @@ export function singleLead(lead_id) {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
-    }) .then(response =>{return response.data.data.lead})
-    .catch(err => console.log(err));
+    }).then(response => { return response.data.data.lead })
+        .catch(err => console.log(err.response));
 }
 
-export function addLeadAppointment(data)
-{
-    const { lead_id, company_id, name, venue, date, time } = data;
+export function addLeadAppointment(data) {
+    const { lead_id, company_id, name, venue, date, time, client_name, sales_name,pax, venue_two } = data;
     return api.post('/appointments',
-    {
-        lead_id: lead_id,
-        company_id: company_id,
-        name: name,
-        date: date,
-        venue: venue,
-        time: time
-    },
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(() => {
-        Alert.alert("Add appointment", "Success");
-    })
-    .catch((error) => {
-        Alert.alert("Create Lead Error", error.response.message);
-    })
+        {
+            lead_id: lead_id,
+            company_id: company_id,
+            name: name,
+            date: date,
+            venue: venue,
+            time: time,
+            client_name,
+            sales_name,
+            pax,
+            venue_two
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Add appointment", "Success");
+        })
+        .catch((error) => {
+            Alert.alert("Create Lead Error", error.response.message);
+            console.log(error.response)
+        })
 }
 
-export function addLeadRemark(data)
-{
-    const {lead_id, remarks} = data;
+export function updateLeadAppointment(data) {
+    const { appointmentId, name, venue, date, time, client_name, sales_name, pax, venue_two } = data;
+    return api.put(`/appointments/${appointmentId}`,
+        {
+            name: name,
+            date: date,
+            venue: venue,
+            time: time,
+            client_name,
+            sales_name,
+            pax,
+            venue_two
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Update appointment", "Success");
+        })
+        .catch((error) => {
+            Alert.alert("Update Lead Error", error.response.message);
+            console.log(error.response)
+        })
+}
+
+export function addLeadRemark(data) {
+    const { lead_id, remarks, remark_id } = data;
 
     return api.post('/lead-remark',
-    {
-        lead_id: lead_id,
-        remarks: remarks
-    },
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(() => {
-        Alert.alert("Add remark", "Success");
-    })
-    .catch((error) => {
-        Alert.alert("Create Lead Error", error.response.message);
-        console.log(error);
-    })
+        {
+            lead_id: lead_id,
+            remarks: remarks,
+            remark_id
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Add remark", "Success");
+        })
+        .catch((error) => {
+            Alert.alert("Create Lead Error", error.response.message);
+            console.log(error.response);
+        })
 }
 
 
-export function getPropertyType()
-{
+export function getPropertyType() {
     return api.get('/get-property-type',
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(response => { return response.data.data} )
-    .catch((error) => {
-        console.log(error)
-    })
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(response => { return response.data.data })
+        .catch((error) => {
+            console.log(error)
+        })
 }
 
-export function getSourceLead()
-{
+export function getSourceLead() {
     return api.get('/get-source-lead',
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(response => { return response.data.data} )
-    .catch((error) => {
-        console.log(error)
-    })
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(response => { return response.data.data })
+        .catch((error) => {
+            console.log(error)
+        })
 }
 
-export function setLeadStatus(type,lead_id)
-{
+export function setLeadStatus(type, lead_id, cancel_reason = '') {
 
     return api.put(`/state-as-${type}/${lead_id}`,
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(() => {
-        Alert.alert("Update Lead", `Lead updated to ${type} status`);
-    })
-    .catch((error) => {
-        console.log(error.response);
-        Alert.alert("Update Lead Error", error.response.message);
-    })
+        {
+            cancel_reason: cancel_reason
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Update Lead", `Lead updated to ${type} status`);
+        })
+        .catch((error) => {
+            console.log(error.response);
+            Alert.alert("Update Lead Error", error.response.message);
+        })
 }

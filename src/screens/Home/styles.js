@@ -61,20 +61,21 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: 'white',
-        height: 85,
+        height: 70,
         borderRadius: 5,
         alignItems: 'center',
         paddingHorizontal: 10,
-        marginBottom: 20
+        marginBottom: 10,
+        marginTop:-10
     },
     wrapper2: {
         flexDirection: 'row',
         backgroundColor: 'white',
         borderRadius: 5,
-        marginBottom: 20,
+        marginBottom: 10,
         justifyContent: 'space-around',
         marginHorizontal: -2,
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
     },
     item: {
         width: '38%',
@@ -114,7 +115,7 @@ export default StyleSheet.create({
         alignItems: 'center'
     },
     innerWhiteText: { 
-        fontSize: 30, 
+        fontSize: 45, 
         color: 'white' 
     }
 

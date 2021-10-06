@@ -40,3 +40,26 @@ export function addProjectWorkSchedule(data)
         console.log(error.response);
     })
 }
+
+export function addProjectRemark(data) {
+    const { project_id, time, title } = data;
+
+    return api.post('/project-remark',
+        {
+            project_id,
+            time,
+            title
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Add remark", "Success");
+        })
+        .catch((error) => {
+            Alert.alert("Create Lead Error", error.response.message);
+            console.log(error.response);
+        })
+}

@@ -15,6 +15,7 @@ import {
     Picker,
     TouchableOpacity,
     Alert,
+    Dimensions
 } from 'react-native'
 import { Overlay } from 'react-native-elements'
 import SelectPicker from '../../components/SelectPicker'
@@ -29,10 +30,12 @@ import moment from 'moment'
 import { getLeadData } from '../../actions/leadAction'
 import { useDispatch } from 'react-redux'
 import { store } from '../../store/store'
-import { getPropertyType } from '../../services/lead'
+import { addLeadRemark, getPropertyType, getSourceLead } from '../../services/lead'
 import { createSalesProject, getSalesData, updateSalesProject } from '../../actions/salesAction'
-import { addProjectWorkSchedule, getSingleProject } from '../../services/sales'
+import { addProjectRemark, addProjectWorkSchedule, getSingleProject } from '../../services/sales'
 import WorkSchedule from '../../components/Sales/WorkSchedule'
+import { getRemarkSource, getSowSource, getVendorSource } from '../../services/config'
+import { RadioButton } from 'react-native-paper';
 
 const SalesEditScreen = ({ props, navigation }) => {
 
@@ -40,11 +43,13 @@ const SalesEditScreen = ({ props, navigation }) => {
 
     const [data, setData] = useState([]);
     const [workSchedules, setWorkSchedules] = useState(item.work_schedules);
-
     const [leadID, setLeadID] = useState('')
-
-    const [sourceLead, setSourceLead] = useState([])
-    const [propertyTypeOption, setPropertyTypeOption] = useState([])
+    const [remarkData, setRemarkData] = useState(item.remarks);
+    const [dataRemark, setDataRemark] = useState([]);
+    const [sourceLeadOption, setSourceLeadOption] = useState([]);
+    const [propertyTypeOption, setPropertyTypeOption] = useState([]);
+    const [conditionTypeOption, setConditionTypeOption] = useState([]);
+    const [salesmanOption, setSalesmanOption] = useState([]);
 
     const [visible, setVisible] = useState(false);
 
@@ -65,36 +70,93 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [vendor_id, setVendor] = useState(1);
     const [other_sow, setOtherSOW] = useState("");
 
-    const SOWOption = [
-        {
-            'id': 'Kicthen',
-            'name': 'Kitchen'
-        },
-        {
-            'id': 'Tiling',
-            'name': 'Tiling'
-        },
-        {
-            'id': 'Roof',
-            'name': 'Roof'
-        },
-        {
-            'id': 'Other',
-            'name': 'Other'
-        },
-    ]
+    const [sowOptions, setSowOptions] = useState([]);
+    const [vendorOption, setVendorOption] = useState([]);
 
-    const VendorOption = [
-        {
-            'id': 1,
-            'name': 'ABC PTE LTD'
-        }
-    ]
+    // REMARK
+    const [remarkId, setRemarkId] = useState(0);
+    const [remarkCheckboxes, setRemarkCheckboxes] = useState([]);
+    const [remarkModal, setRemarkModal] = useState(false);
+    const [remarkCheck, setRemarkCheck] = useState('');
 
+    useEffect(() => {
+        getPropertyType().then((data) => {
+            setPropertyTypeOption([]);
+            data.map((value) => {
+                setPropertyTypeOption((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.id, key: value.name },
+                ]);
+            });
+        });
+        getVendorSource().then((data) => {
+            setVendorOption([]);
+            data.data.map((value) => {
+                setVendorOption((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.id, key: value.name },
+                ]);
+            });
+        });
+        getSowSource().then((data) => {
+            setSowOptions([]);
+            data.data.map((value) => {
+                setSowOptions((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.name, key: value.name },
+                ]);
+            });
+        });
+    }, [item.id]);
+
+    // REMARK
+    useEffect(() => {
+        getRemarkSource().then((data) => rebuildRemarkOption(data.data));
+    }, [item.id]);
+
+    const rebuildRemarkOption = (data) => {
+        setRemarkCheckboxes([]);
+        data.map((value) => {
+            setRemarkCheckboxes((oldValue) => [
+                ...oldValue,
+                { id: value.id, value: value.name },
+            ]);
+        });
+    };
+
+    const remarkModalToggle = () => {
+        setRemarkModal(!remarkModal);
+    };
+
+    const addRemark = () => {
+        let remarkItem = {
+            project_id: item.id,
+            title: remarkCheck,
+            time: moment('YYYY-MM-DD'),
+        };
+
+        setRemarkData([...remarkData, remarkItem]);
+        addProjectRemark(remarkItem).
+            then(
+                remarkModalToggle()
+            );
+    };
 
     const toggleOverlay = () => {
         setVisible(!visible)
     }
+
+    const rebuildRemarkObject = (data) => {
+        data.map((value) => {
+            setDataRemark((oldValue) => [
+                ...oldValue,
+                {
+                    time: moment(value.created_at).format('DD/MM/YYYY'),
+                    title: value.title,
+                },
+            ]);
+        });
+    };
 
     const onSelectSourceLead = (data) => {
         setLeadID(data)
@@ -109,7 +171,7 @@ const SalesEditScreen = ({ props, navigation }) => {
             if (value.id == item.lead_id) {
                 setSourceLead((oldValue) => [
                     ...oldValue,
-                    { id: value.id, name: value.runner_no },
+                    { id: value.id, name: value.runner_no, },
                 ])
 
                 setLeadID(value.id);
@@ -160,24 +222,17 @@ const SalesEditScreen = ({ props, navigation }) => {
                 item.id
             ),
         )
-
-        dispatch(getSalesData());
     }
 
     const addWorkSchedule = () => {
-        // const { project_id, vendor_id, start_date, end_date, venue, scope_of_work } = data;
-        //VALIDATE
-
         let finalSOW = scope_of_work;
 
-        if(scope_of_work == 'Other')
-        {
-            if(other_sow == '')
-            {
+        if (scope_of_work == 'Other') {
+            if (other_sow == '') {
                 Alert.alert("Warning", "Please fill Scope Of Work");
                 return;
             }
-            else{
+            else {
                 finalSOW = other_sow;
             }
         }
@@ -190,42 +245,25 @@ const SalesEditScreen = ({ props, navigation }) => {
             start_date,
             end_date
         }
-        
+
         addProjectWorkSchedule(workSchedule)
             .then(setWorkSchedules([...workSchedules, workSchedule]))
             .then(toggleOverlay());
     }
 
     useEffect(() => {
-        let dispatched = false;
-        dispatch(getLeadData())
-        console.log(item);
-        return () => {
-            dispatched = true;
-        }
-    }, [])
-
-    useEffect(() => {
-        getPropertyType().then((data) => {
-            setPropertyTypeOption(data)
-            // setPropertyType(data[0].id)
-        })
-    }, [])
-
-    useEffect(() => {
         let fetched = false;
         getSingleProject(item.id).then((data) => {
             setData(data)
+            setDataRemark([]);
+            rebuildRemarkObject(data.remarks);
         });
         return () => {
             fetched = true;
         }
-    }, [item.id, workSchedules]);
+    }, [item.id, workSchedules, remarkData]);
 
-    store.subscribe(() => {
-        setSourceLead([])
-        rebuildSourceLeadData(store.getState().leadsReducer.data)
-    })
+
 
     return (
         <View
@@ -236,6 +274,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                 backgroundColor: '#F3F3F3',
             }}
         >
+            {/* REMARK WORK SCHEDULE */}
             <Overlay
                 isVisible={visible}
                 onBackdropPress={toggleOverlay}
@@ -254,21 +293,19 @@ const SalesEditScreen = ({ props, navigation }) => {
 
                     <TextField placeholder="Venue" required={true} editable={true} label="Venue" onChange={venue => setVenue(venue)} />
                     <SelectPicker
-                        key='VENDOR_PICKER'
                         label="Vendor"
                         required={true}
                         selectedValue={vendor_id}
                         onSelect={vendorId => setVendor(vendorId)}
-                        options={VendorOption}
+                        options={vendorOption}
                     />
 
                     <SelectPicker
-                        key='SOW_PICKER'
                         label="Scope of Work"
                         required={true}
                         selectedValue={scope_of_work}
                         onSelect={sow => setSOW(sow)}
-                        options={SOWOption}
+                        options={sowOptions}
                     />
 
                     <LongText
@@ -276,9 +313,52 @@ const SalesEditScreen = ({ props, navigation }) => {
                         onChange={otherSOW => setOtherSOW(otherSOW)}
                     />
 
-                    <DefaultButton textButton="SAVE DETAILS"  onPress={addWorkSchedule} />
+                    <DefaultButton textButton="SAVE DETAILS" onPress={addWorkSchedule} />
                 </View>
             </Overlay>
+
+            {/* REMARK MODAL */}
+            <Overlay
+                isVisible={remarkModal}
+                onBackdropPress={remarkModalToggle}
+                overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }}
+            >
+                <View>
+                    <Text
+                        style={[
+                            styles.title,
+                            { color: 'grey', fontWeight: '800', fontSize: 18 },
+                        ]}>
+                        Please choose remark
+                    </Text>
+                    {remarkCheckboxes &&
+                        remarkCheckboxes?.length > 0 &&
+                        remarkCheckboxes.map((item, index) => {
+                            return (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <RadioButton.Android
+                                        value={item.value}
+                                        status={remarkCheck == item.value ? 'checked' : 'unchecked'}
+                                        onPress={() => {
+                                            setRemarkCheck(item.value);
+                                            setRemarkId(item.id);
+                                        }}
+                                    />
+                                    <Text style={{ fontSize: 14 }}>{item.value}</Text>
+                                </View>
+                            );
+                        })}
+                    <LongText
+                        value={remarkCheck}
+                        onChange={(remark) => {
+                            setRemarkCheck(remark);
+                            setRemarkId(0);
+                        }}
+                    />
+                    <DefaultButton onPress={addRemark} textButton="SAVE CHANGES" />
+                </View>
+            </Overlay>
+
             <View style={{ padding: 20 }}>
                 <Text style={{ fontSize: 20 }}>Edit Project</Text>
                 <Text style={{ fontSize: 14, color: 'red' }}>*Required fields</Text>
@@ -291,17 +371,16 @@ const SalesEditScreen = ({ props, navigation }) => {
                         required={false}
                         label="Project ID"
                         editable={false}
-                        value={data.project_code ? data.project_code : item.project_code}
+                        value={data.project_no ? data.project_no : item.project_no}
                     />
 
-                    <SelectPicker
-                        key={1}
+                    {/* <SelectPicker
                         label="Source"
                         required={true}
                         selectedValue={leadID}
                         onSelect={onSelectSourceLead}
                         options={sourceLead}
-                    />
+                    /> */}
                     <TextField
                         placeholder="Project created on"
                         label="Project created on"
@@ -310,7 +389,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                         value={moment(data.created_at).format("YYYY/MM/DD")}
                     />
 
-                    <SelectPicker key={2} label="Assign To" required={true} />
+                    {/* <SelectPicker label="Assign To" required={true} /> */}
 
                     <TextField
                         placeholder="Client Name"
@@ -407,10 +486,9 @@ const SalesEditScreen = ({ props, navigation }) => {
 
                     {propertyTypeOption && (
                         <SelectPicker
-                            key={3}
                             label="Property Type"
                             required={true}
-                            selectedValue={data.property_type_id}
+                            selectedValue={data.property_type_id ? data.property_type_id : item.property_type_id}
                             options={propertyTypeOption}
                             onSelect={onSelectPropertyType}
                         />
@@ -447,84 +525,114 @@ const SalesEditScreen = ({ props, navigation }) => {
                 <View style={{ flexDirection: 'column' }}>
                     {
                         data.work_schedules && data.work_schedules.map((item, index) => {
-                            return (<WorkSchedule item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />)
+                            return (<WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />)
                         })
                     }
                 </View>
-                <View
-                    style={{
-                        backgroundColor: 'white',
-                        height: 45,
-                        marginTop: 5,
-                        paddingHorizontal: 20,
-                        flexDirection: 'row',
-                    }}
-                >
-                    <View style={{ width: '100%', justifyContent: 'center' }}>
-                        <TouchableOpacity onPress={toggleOverlay} key="WS-BUTTON">
-                            <Text style={{ color: 'black' }}>Work Schedule</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-                {/* Remark */}
-
-                <View
-                    style={{
-                        backgroundColor: 'white',
-                        padding: 30,
-                        margin: -20,
-                        marginTop: 15,
-                        marginBottom: 3,
-                    }}
-                >
-                    <Text style={{ marginTop: -20, marginLeft: 10 }}>Remark</Text>
-                    <Timeline
-                        style={styles.list}
-                        data={leadCollection.leadRemakrs}
-                        circleSize={10}
-                        circleColor="grey"
-                        lineColor="grey"
-                        timeContainerStyle={{ minWidth: 93 }}
-                        timeStyle={{
-                            textAlign: 'center',
-                            color: 'grey',
-                            marginTop: -5,
-                            marginBottom: 10,
-                        }}
-                        titleStyle={{
-                            textAlign: 'left',
-                            color: 'grey',
-                            marginTop: -15,
-                            fontWeight: '100',
-                            fontSize: 14,
-                            marginBottom: 10,
-                        }}
-                        innerCircle={'dot'}
-                    />
-                </View>
-                <View
-                    style={{
-                        backgroundColor: 'white',
-                        justifyContent: 'center',
-                        height: 45,
-                        marginTop: 5,
-                        paddingHorizontal: 20,
-                        flexDirection: 'row',
-                    }}
-                >
-                    <View style={{ width: '50%', justifyContent: 'center' }}>
-                        <Text style={{ color: 'black' }}>Add new remark</Text>
-                    </View>
+                <TouchableOpacity onPress={toggleOverlay}>
                     <View
                         style={{
-                            width: '50%',
-                            alignItems: 'flex-end',
+                            backgroundColor: 'white',
                             justifyContent: 'center',
-                        }}
-                    >
-                        <Icon name="plus" size={30} color="black" />
+                            height: 45,
+                            marginTop: 5,
+                            paddingHorizontal: 20,
+                            flexDirection: 'row',
+                        }}>
+                        <View style={{ width: '50%', justifyContent: 'center' }}>
+                            <Text style={{ color: 'black' }}>Add work schedule</Text>
+                        </View>
+                        <View
+                            style={{
+                                width: '50%',
+                                alignItems: 'flex-end',
+                                justifyContent: 'center',
+                            }}>
+                            <Icon name="plus" size={30} color="black" />
+                        </View>
+                    </View>
+                </TouchableOpacity>
+                {/* Remark */}
+                <View style={{ flexDirection: 'row' }}>
+                    <View style={{ width: '50%' }}>
+                        <Text style={{ marginLeft: 20, marginTop: 20 }}>Remarks</Text>
                     </View>
                 </View>
+                {
+                    dataRemark.length > 0 ?
+                        (
+                            <View
+                                style={{
+                                    backgroundColor: 'white',
+                                    paddingHorizontal: 50,
+                                    margin: -20,
+                                    marginTop: 15,
+                                    marginBottom: 1,
+                                    paddingBottom: 5,
+                                    paddingTop: 10,
+                                }}>
+                                <Timeline
+                                    style={styles.list}
+                                    data={dataRemark}
+                                    circleSize={10}
+                                    circleColor="grey"
+                                    lineColor="grey"
+                                    timeContainerStyle={{ minWidth: 93 }}
+                                    listViewContainerStyle={{ paddingTop: 10 }}
+                                    timeStyle={{
+                                        textAlign: 'center',
+                                        color: 'grey',
+                                        marginTop: -5,
+                                        marginBottom: 10,
+                                    }}
+                                    titleStyle={{
+                                        textAlign: 'left',
+                                        color: 'grey',
+                                        marginTop: -15,
+                                        fontWeight: '100',
+                                        fontSize: 14,
+                                        marginBottom: 10,
+                                    }}
+                                    innerCircle={'dot'}
+                                />
+
+                            </View>
+                        ) :
+                        (
+                            <View
+                                style={{
+                                    backgroundColor: '#B9B9B9',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: 30,
+                                }}>
+                                <Text style={{ color: '#808080' }}>No remark yet</Text>
+                            </View>
+                        )
+                }
+                <TouchableOpacity onPress={remarkModalToggle}>
+                    <View
+                        style={{
+                            backgroundColor: 'white',
+                            justifyContent: 'center',
+                            height: 45,
+                            marginTop: 5,
+                            paddingHorizontal: 20,
+                            flexDirection: 'row',
+                        }}>
+                        <View style={{ width: '50%', justifyContent: 'center' }}>
+                            <Text style={{ color: 'black' }}>Add new remark</Text>
+                        </View>
+                        <View
+                            style={{
+                                width: '50%',
+                                alignItems: 'flex-end',
+                                justifyContent: 'center',
+                            }}>
+                            <Icon name="plus" size={30} color="black" />
+                        </View>
+                    </View>
+                </TouchableOpacity>
                 <DefaultButton
                     onPress={onSubmitUpdate}
                     textButton="SAVE CHANGES"

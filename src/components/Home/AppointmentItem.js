@@ -22,9 +22,11 @@ const AppointmentItem = props => {
                 </View>
                 <View style={[styles.row, { flexDirection: "row" }]}>
                     <View style={styles.column_2}>
-                        <Text style={styles.text}>{props.item.venue}</Text>
+                        <Text style={styles.text}>{props.item.lead.runner_no}</Text>
+                        <Text style={styles.text}>{props.item.venue} {props.item.venue_two ? " | "+props.item.venue_two : ''}</Text>
+                        <Text>{props.item.client_name}</Text>
                     </View>
-                    <View style={{ width: '50%', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                    <View style={{ width: '15%', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
                         <Text style={styles.text}>{props.item.time}</Text>
                     </View>
                 </View>
@@ -43,14 +45,14 @@ const styles = StyleSheet.create({
         marginVertical: 2
     },
     column_2: {
-        width: '50%'
+        width: '80%'
     },
     textDate: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#C6C6C6' 
     },
     text: {
-        fontSize: 16, 
+        fontSize: 14, 
         color: '#707070' 
     }
 });

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Overlay } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/AntDesign';
-
+import { store } from '../../store/store';
+import { HeaderBackButton } from 'react-navigation-stack';
 export const leadsOption = ({ navigation }) => {
     return {
         headerLeft: () => (
@@ -38,9 +39,15 @@ export const leadsOption = ({ navigation }) => {
                             </TouchableOpacity>
                         </View>
                     </Overlay>
-                    <TouchableOpacity onPress={() => navigation.navigate('LeadCreation')}>
-                        <Icon name="plus" size={30} color='white' style={{ marginRight: 15 }} />
-                    </TouchableOpacity>
+                    {
+                        store.getState().loginReducer.scopes.includes('lead-create') &&
+                        (
+                            <TouchableOpacity onPress={() => navigation.navigate('LeadCreation')}>
+                                <Icon name="plus" size={30} color='white' style={{ marginRight: 15 }} />
+                            </TouchableOpacity>
+                        )
+                    }
+
                     <TouchableOpacity
                         onPress={toggleOverlay}>
                         <Icon name="ellipsis1" size={30} color='white' style={{ marginRight: 15 }} />
@@ -72,8 +79,8 @@ export const leadsViewOption = ({ navigation }) => {
         headerRight: props => {
             return (
                 <View style={{ flexDirection: 'row' }}>
-                    <TouchableOpacity onPress={() => navigation.push('LeadEdit', {item: navigation.getParam('item')})}>
-                        <View style={{ width: 60, alignItems:'center', justifyContent:'center' }}>
+                    <TouchableOpacity onPress={() => navigation.push('LeadEdit', { item: navigation.getParam('item') })}>
+                        <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
                             <Icon name="edit" size={20} color='white' style={{ marginRight: 15 }} />
                         </View>
                     </TouchableOpacity>
@@ -96,3 +103,21 @@ export const leadsViewOption = ({ navigation }) => {
 
     }
 };
+
+export const leadsEditOption = ({ navigation }) => {
+    return {
+        headerLeft: (
+            <HeaderBackButton style={{width:100}} tintColor='white' style={{color:'white'}} onPress={() => { navigation.navigate('List', { filterStatus: '',needAttention: '' }) }} />
+        ),
+        title: '',
+        headerTintColor: 'white',
+        headerStyle: {
+            backgroundColor: 'black',
+            shadowOpacity: 0.25,
+            shadowOffset: {
+                height: 1,
+            },
+            shadowRadius: 5,
+        },
+    }
+}

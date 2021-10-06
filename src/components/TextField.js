@@ -1,25 +1,29 @@
 import React, { useState } from "react";
-import { 
-        Text, 
-        View, 
-        TextInput, 
-        StyleSheet
-        }
-        from "react-native";
+import {
+    Text,
+    View,
+    TextInput,
+    StyleSheet
+}
+    from "react-native";
 
-const TextField = ({value, onChange, ...props}) => {
+const TextField = ({ value, onChange, ...props }) => {
     return (
-        <View style={{marginTop:20}}>
-            <View style={{flexDirection:'row', marginBottom:5}}>
-            { props.label &&
-                <Text>{props.label}</Text>
-            }
+        <View style={{ marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', marginBottom: 5 }}>
+                {props.label &&
+                    <Text>{props.label}</Text>
+                }
 
-            { props.required &&
-                <Text style={{color:'red'}}>*</Text>
-            }
+                {props.required &&
+                    <Text style={{ color: 'red' }}>*</Text>
+                }
             </View>
-            <TextInput value={value} keyboardType={props.keyboardType ? props.keyboardType : 'default'} onChangeText={onChange} placeholder={props.placeholder} style={{backgroundColor: (props.editable == false) ? '#B9B9B9' : 'white', height:40, padding:5, width:props.width ? props.width : '100%', elevation:1 }} editable={props.editable ? props.editable : true} />
+            <TextInput value={value} autoCapitalize={props.autoCapitalize ? props.autoCapitalize : 'words'} returnKeyType={'done'} multiline={props.multiline ? props.multiline : false} keyboardType={props.keyboardType ? props.keyboardType : 'default'} onChangeText={onChange} placeholder={props.placeholder} style={{
+                backgroundColor: (props.editable == false) ? '#B9B9B9' : 'white', height: 40, padding: 5, width: props.width ? props.width : '100%', elevation: 3, borderWidth: 1,
+                borderColor: 'gray',
+                borderRadius: 4,
+            }} editable={props.editable ? props.editable : true} />
         </View>
     );
 };
@@ -31,7 +35,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#fff',
         height: 50,
-        marginBottom: 10
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: 'gray',
+        borderRadius: 4,
     },
     searchIcon: {
         padding: 10,
@@ -44,6 +51,7 @@ const styles = StyleSheet.create({
         paddingLeft: 0,
         backgroundColor: '#fff',
         color: '#424242',
+
     },
 });
 

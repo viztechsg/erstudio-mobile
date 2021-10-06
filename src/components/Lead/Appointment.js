@@ -29,7 +29,8 @@ const Appointment = props => {
                         </View>
                     </View>
                     <View>
-                        <Text style={{ color: 'black', fontSize:18 }}>{props.item.venue}</Text>
+                        <Text style={{ color: 'black', fontSize:18 }}>{props.item.venue} {props.item.venue_two ? " | "+props.item.venue_two : ''}</Text>
+                        <Text>{props.item.client_name}</Text>
                     </View>
                 </View>
             </View>

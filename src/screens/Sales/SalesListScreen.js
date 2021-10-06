@@ -13,6 +13,8 @@ import { getLeadData, deleteLead } from '../../actions/leadAction';
 import { store } from '../../store/store';
 import SalesItem from '../../components/Sales/SalesItem';
 import { getSalesData } from '../../actions/salesAction';
+import { SafeAreaView } from 'react-native';
+import DatePicker from '../../components/DatePicker';
 
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
@@ -22,10 +24,12 @@ const SalesListScreen = (props) => {
     const { navigation } = props;
 
     // FILTER
+    var dateFilter = new Date();
+    var nextDay = dateFilter.setDate(dateFilter.getDate() + 1);
     const [visible, setVisible] = useState(false);
     const [selectedValue, setSelectedValue] = useState("ready");
-    const [defaultLabel, setDefaultLabel] = useState("");
-    const [defaultLabel2, setDefaultLabel2] = useState("");
+    const [defaultLabel, setDefaultLabel] = useState(new Date());
+    const [defaultLabel2, setDefaultLabel2] = useState(nextDay);
     const [date, setDate] = useState(new Date());
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
@@ -39,28 +43,6 @@ const SalesListScreen = (props) => {
         setVisible(!visible);
     };
 
-    const onChange = (event, selectedDate) => {
-        const currentDate = selectedDate || date;
-        setShow(Platform.OS === 'ios');
-        setDate(currentDate);
-        if (dateType == 1) {
-            setDefaultLabel(currentDate);
-        }
-        else {
-            setDefaultLabel2(currentDate);
-        }
-
-    };
-
-    const showMode = (currentMode) => {
-        setShow(true);
-        setMode(currentMode);
-    };
-
-    const showDatepicker = (type) => {
-        showMode('date');
-        setDateType(type);
-    };
 
     const dispatch = useDispatch();
 
@@ -68,7 +50,15 @@ const SalesListScreen = (props) => {
         dispatch(getSalesData());
     }, []);
 
+    useEffect(() => {
+        navigation.addListener('willFocus', () => {
+            // dispatch(getSalesData());
+            onRefresh();
+        });
+    }, [navigation])
+
     store.subscribe(() => {
+        console.log(store.getState().salesReducer.data)
         setSalesData(store.getState().salesReducer.data);
     });
 
@@ -81,7 +71,13 @@ const SalesListScreen = (props) => {
     const filterSales = () => {
         toggleOverlay();
         setRefreshing(true);
-        dispatch(getSalesData(selectedValue, '', ''));
+        dispatch(
+            getSalesData(
+                selectedValue, 
+                moment(defaultLabel).format('YYYY-MM-DD'),
+                moment(defaultLabel2).format('YYYY-MM-DD'),
+                )
+            );
         wait(3000).then(() => setRefreshing(false));
     }
 
@@ -97,8 +93,9 @@ const SalesListScreen = (props) => {
                 },
                 {
                     text: "OK", onPress: () => {
-                        dispatch(deleteLead(id))
-                        dispatch(getLeadData())
+                        // dispatch(deleteLead(id))
+                        // dispatch(getLeadData())
+                        console.log("DELETED");
                     }
                 }
             ],
@@ -114,10 +111,10 @@ const SalesListScreen = (props) => {
             alignItems: 'stretch',
             padding: 20,
         }}>
-            <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%', height: 400 }}>
+            <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%' }}>
                 <View>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Filter</Text>
-                    <View
+                    {/* <View
                         style={{
                             marginTop: 10,
                         }}
@@ -133,7 +130,7 @@ const SalesListScreen = (props) => {
                             <Picker.Item label="Ready" value="ready" />
                             <Picker.Item label="Closed" value="closed" />
                         </Picker>
-                    </View>
+                    </View> */}
                     <View
                         style={{
                             marginTop: 10,
@@ -141,38 +138,21 @@ const SalesListScreen = (props) => {
                     >
                         <Text style={{ fontSize: 14, color: 'grey' }}>Date Range</Text>
                         <View style={{ flexDirection: 'row' }}>
-                            <TouchableOpacity onPress={() => showDatepicker(1)} style={{ width: '50%' }}>
-                                <Picker
-                                    style={{
-                                        height: 50,
-                                    }}
-                                >
-                                    <Picker.Item label={(typeof (defaultLabel) === 'object') ? moment(defaultLabel).format('DD-MM-YYYY') : defaultLabel} value="null" />
-                                </Picker>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => showDatepicker(2)} style={{ width: '50%' }}>
-                                <Picker
-                                    style={{
-                                        height: 50,
-                                    }}
-                                >
-                                    <Picker.Item label={(typeof (defaultLabel2) === 'object') ? moment(defaultLabel2).format('DD-MM-YYYY') : defaultLabel2} value="null" />
-                                </Picker>
-                            </TouchableOpacity>
+                            <View style={{ width: '50%' }}>
+                                <DatePicker
+                                    selectedDate={defaultLabel}
+                                    onChange={(value) => setDefaultLabel(value)}
+                                />
+                            </View>
+                            <View style={{ width: '50%' }}>
+                                <DatePicker
+                                    selectedDate={defaultLabel2}
+                                    onChange={(value) => { setDefaultLabel2(value) }}
+                                />
+                            </View>
                         </View>
-
-                        {show && (
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={date}
-                                mode={mode}
-                                is24Hour={true}
-                                display="default"
-                                onChange={onChange}
-                            />
-                        )}
                     </View>
-                    <View style={styles.buttonSection}>
+                    <View style={[styles.buttonSection, { marginVertical: 20 }]}>
                         <TouchableOpacity style={styles.button} onPress={filterSales}>
                             <Text style={styles.textButton}>FILTER</Text>
                         </TouchableOpacity>
@@ -189,35 +169,34 @@ const SalesListScreen = (props) => {
                     </TouchableOpacity>
                 </View>
             </View>
-            <View style={{ flex: 1, marginTop: 7, margin: -20}}>
+            <SafeAreaView style={{ flex: 1, marginTop: 7, margin: -20 }}>
                 {
                     (salesData && salesData.length > 0) ?
-                    <FlatList
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={onRefresh}
-                            />}
-                        keyExtractor={item => item.id.toString()}
-                        data={salesData}
-                        renderItem={({ item }) => {
-                            return (
-                                <Swipeout
-                                    right={[
-                                        {
-                                            component: <SwipeoutButton onDeletePress={() => leadDeletePress(item.id)} onEditPress={() => navigation.navigate('SalesEdit', { item: item })} />,
-                                        }
-                                    ]}
-                                    autoClose
-                                >
-                                    <SalesItem item={item} status="follow" onViewPress={() => navigation.navigate('SalesView', { item: item })} />
-                                </Swipeout>
-                            )
-                        }}
-                    /> : <Text style={{width:"100%", backgroundColor:'lightgrey', textAlign:'center'}}>No data</Text>
+                        <FlatList
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                />}
+                            keyExtractor={(item) => item.id.toString()}
+                            data={salesData}
+                            renderItem={({ item }) => {
+                                return (
+                                    <Swipeout
+                                        right={[
+                                            {
+                                                component: <SwipeoutButton onDeletePress={() => leadDeletePress(item.id)} onEditPress={() => navigation.navigate('SalesEdit', { item: item })} />,
+                                            }
+                                        ]}
+                                    >
+                                        <SalesItem item={item} status="follow" onViewPress={() => navigation.navigate('SalesView', { item: item })} />
+                                    </Swipeout>
+                                )
+                            }}
+                        /> : <Text style={{ width: "100%", backgroundColor: 'lightgrey', textAlign: 'center' }}>No data</Text>
                 }
 
-            </View>
+            </SafeAreaView>
         </View>
     )
 }

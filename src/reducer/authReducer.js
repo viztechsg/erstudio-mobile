@@ -20,7 +20,8 @@ export const loginReducer = (state = initialState, action) => {
                 name: action.payload.data.user.name,
                 id: action.payload.data.user.id,
                 role: action.payload.data.token.token.scopes[0],
-                company: action.payload.data.user.company
+                company: action.payload.data.user.company,
+                scopes: action.payload.data.token.token.scopes
             };
         case "PREPARE_LOGIN":
             return {

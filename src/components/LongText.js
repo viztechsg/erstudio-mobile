@@ -21,7 +21,8 @@ const LongText = ({value, onChange, ...props}) => {
                 }
             </View>
             <TextInput
-                multiline={true}
+                value={value}
+                multiline={props.multiline ? props.multiline : true}
                 numberOfLines={10}
                 style={styles.inputSection}
                 placeholder="Type Something"
@@ -38,7 +39,10 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start', 
         padding:5, 
         textAlignVertical: 'top',
-        elevation:1
+        elevation:3,
+        borderWidth: 1,
+        borderColor: 'gray',
+        borderRadius: 4,
     },
 });
 

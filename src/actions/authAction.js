@@ -4,24 +4,23 @@ import { store } from '../store/store';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from "@react-native-community/async-storage";
 export function login(params) {
-    const { email, password, navigation, remember } = params;
+    const { email, password, navigation, remember, push_token } = params;
 
     return (dispatch) => {
         dispatch(loginBegin())
 
         api.post('/login', {
             email: email,
-            password: password
+            password: password,
+            push_token
         })
             .then((data) => {
-                console.log(data.data);
                 dispatch(setLoginState(data.data));
                 if(remember)
                 {
                     rememberUser(email,password,"true");
                 }
                 
-
             })
             .then(() => {
                 navigation.navigate('Home');

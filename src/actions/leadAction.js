@@ -3,10 +3,10 @@ import api from '../api/api';
 import { store } from '../store/store';
 import moment from 'moment';
 
-export function getLeadData(status = '', start_date = '', end_date = '', salesman_id = '') {
+export function getLeadData(status = '', start_date = '', end_date = '', salesman_id = '', need_attention = '') {
     return (dispatch) => {
 
-        api.get(`/leads?status=${status}&start_date=${start_date}&end_date=${end_date}&salesman_id=${salesman_id}`, {
+        api.get(`/leads?status=${status}&start_date=${start_date}&end_date=${end_date}&salesman_id=${salesman_id}&need_attention=${need_attention}`, {
             headers: {
                 Authorization: `Bearer ${store.getState().loginReducer.token}`
             }
@@ -47,7 +47,13 @@ export function createLead(params) {
         selectedAssign,
         budget,
         remarks,
-        conditionType
+        conditionType,
+        moveInDate,
+        normal_option_source,
+        normal_option_ref_notes,
+        memo,
+        salutation,
+        country_code
     } = params;
 
     return (dispatch) => {
@@ -69,7 +75,13 @@ export function createLead(params) {
                 residence: residence,
                 block_no: blockNo,
                 salesman_id: selectedAssign,
-                remarks: remarks
+                remarks: remarks,
+                move_in_date: moveInDate,
+                normal_option_source,
+                normal_option_ref_notes,
+                memo,
+                salutation,
+                country_code
 
             },
             {
@@ -92,7 +104,7 @@ export function createLead(params) {
 }
 
 export function updateLEad(params, lead_id) {
-    const { clientName, email, phoneNumber, propertyType, status, sourceLead, postalCode, roadName, roadNo, residence, blockNo, salesId, budget, conditionType } = params;
+    const { clientName, email, phoneNumber, propertyType, status, sourceLead, postalCode, roadName, roadNo, residence, blockNo, salesId, budget, conditionType, moveInDate, normal_option_source, normal_option_ref_notes, memo, salutation, country_code  } = params;
     return (dispatch) => {
         api.put(`/leads/${lead_id}`,
             {
@@ -111,7 +123,13 @@ export function updateLEad(params, lead_id) {
                 condition_type: conditionType,
                 residence,
                 block_no: blockNo,
-                budget: budget
+                budget: budget,
+                move_in_date: moveInDate,
+                normal_option_source, 
+                normal_option_ref_notes,
+                memo,
+                salutation,
+                country_code
             },
             {
                 headers: {
