@@ -3,22 +3,21 @@ import { StyleSheet, Dimensions, View, Text, ScrollView, TouchableOpacity } from
 import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useState } from 'react';
-import { getQuotationUrl } from '../../services/quotation';
+import { getAgreementUrl } from '../../services/agreement';
 // import {salesViewDocumentOption} from '../../general/Header/SalesHeader';
 // import Pdf from 'react-native-pdf';
 
-const SalesViewDocument = ({ navigation }) => {
+const SalesViewAgreementDocument = ({ navigation }) => {
     const { item, type, uri } = navigation.state.params;
     const [fixedURI, setFixedURI] = useState(uri);
 
-    useEffect(() => { 
+    useEffect(() => {
         navigation.setParams({
             item: item,
             type: type
         });
-        if(type == "Quotation" && uri == "need-fetch")
-        {
-            getQuotationUrl(item.id).then(data => setFixedURI(data));
+        if (type == "Agreement" && uri == "need-fetch") {
+            getAgreementUrl(item.id).then(data => setFixedURI(data));
         }
     }, [item.id])
     return (
@@ -27,7 +26,7 @@ const SalesViewDocument = ({ navigation }) => {
                 <View style={{ width: '80%' }}>
                     <Text style={{ color: 'white', fontSize: 16 }}>{type}</Text>
                     {
-                        (type == 'Quotation' && item.is_approved == 0) ?
+                        (type == 'Agreement' && item.is_approved == 0) ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
                                 This document need approval
                             </Text>
@@ -36,9 +35,8 @@ const SalesViewDocument = ({ navigation }) => {
                                 This document has been approved
                             </Text>
                     }
-
                     {
-                        (type == 'Quotation' && item.customer_sign == null) ?
+                        (type == 'Agreement' && item.client_sign == null) ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
                                 This document need to be signed
                             </Text>
@@ -48,12 +46,17 @@ const SalesViewDocument = ({ navigation }) => {
                             </Text>
                     }
                 </View>
-                <View style={{ width: '18%', alignItems: 'flex-end' }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('SalesSignDocument',{id:item.id})}>
-                        <Icon name='infocirlceo' size={20} color='white' />
-                    </TouchableOpacity>
-                </View>
+                {
+                    item.client_sign == null && (
+                        <View style={{ width: '18%', alignItems: 'flex-end' }}>
+                            <TouchableOpacity onPress={() => navigation.navigate('SalesSignAgreement', { id: item.id })}>
+                                <Icon name='infocirlceo' size={20} color='white' />
+                            </TouchableOpacity>
+                        </View>
+                    )
+                }
             </View>
+
             <WebView style={{ flex: 1 }} source={{ uri: `http://docs.google.com/gview?embedded=true&url=${fixedURI}` }} />
         </View>
 
@@ -75,4 +78,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default SalesViewDocument;
+export default SalesViewAgreementDocument;

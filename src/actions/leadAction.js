@@ -48,12 +48,14 @@ export function createLead(params) {
         budget,
         remarks,
         conditionType,
-        moveInDate,
+        estMoveDate,
         normal_option_source,
         normal_option_ref_notes,
         memo,
         salutation,
-        country_code
+        country_code,
+        country_name,
+        company_group_id
     } = params;
 
     return (dispatch) => {
@@ -76,13 +78,14 @@ export function createLead(params) {
                 block_no: blockNo,
                 salesman_id: selectedAssign,
                 remarks: remarks,
-                move_in_date: moveInDate,
+                move_in_date: estMoveDate,
                 normal_option_source,
                 normal_option_ref_notes,
                 memo,
                 salutation,
-                country_code
-
+                country_code,
+                country_name,
+                company_group_id
             },
             {
                 headers: {
@@ -104,7 +107,7 @@ export function createLead(params) {
 }
 
 export function updateLEad(params, lead_id) {
-    const { clientName, email, phoneNumber, propertyType, status, sourceLead, postalCode, roadName, roadNo, residence, blockNo, salesId, budget, conditionType, moveInDate, normal_option_source, normal_option_ref_notes, memo, salutation, country_code  } = params;
+    const { clientName, email, phoneNumber, propertyType, status, sourceLead, postalCode, roadName, roadNo, residence, blockNo, salesId, budget, conditionType, moveInDate, normal_option_source, normal_option_ref_notes, memo, salutation, country_code, country_name, company_group_id } = params;
     return (dispatch) => {
         api.put(`/leads/${lead_id}`,
             {
@@ -129,7 +132,9 @@ export function updateLEad(params, lead_id) {
                 normal_option_ref_notes,
                 memo,
                 salutation,
-                country_code
+                country_code,
+                country_name,
+                company_group_id
             },
             {
                 headers: {

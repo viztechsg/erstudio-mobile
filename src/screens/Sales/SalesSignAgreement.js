@@ -2,9 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Alert } from 'react-native';
 import { StyleSheet, Text, View, Image, Button, CheckBox, TouchableOpacity } from 'react-native';
 import SignatureScreen from 'react-native-signature-canvas';
-import { signQuotation } from '../../services/quotation';
+import { signAgreement } from '../../services/agreement';
 
-const SalesSignDocument = ({ navigation, onOK }) => {
+const SalesSignAgreement = ({ navigation, onOK }) => {
     const [signature, setSign] = useState(null);
     const { id } = navigation.state.params;
     const ref = useRef();
@@ -22,7 +22,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
     };
 
     const handleConfirm = () => {
-        signQuotation(id,signature).then(Alert.alert("SIGNED")).then(handleClear);
+        signAgreement(id,signature).then(Alert.alert("SIGNED")).then(handleClear);
     }
 
     const style = `
@@ -46,7 +46,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
                         source={{ uri: signature }}
                     />
                 ) : null} */}
-                <Text style={{ color: 'white', fontSize: 16 }}>Customer's Sign</Text>
+                <Text style={{ color: 'white', fontSize: 16 }}>Agreement Customer's Sign</Text>
             </View>
             <View style={styles.container}>
                 <SignatureScreen
@@ -58,7 +58,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
                 <View style={styles.row}>
                     <View style={{ justifyContent: 'flex-start', flexDirection: 'row', padding: 5 }}>
                         <CheckBox />
-                        <Text style={{ fontSize: 12 }}>I agree to all terms & conditions stated in this quotation/agreement</Text>
+                        <Text style={{ fontSize: 12 }}>I agree to all terms & conditions stated in this agreement</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
                         <TouchableOpacity
@@ -127,4 +127,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default SalesSignDocument;
+export default SalesSignAgreement;

@@ -65,7 +65,7 @@ export const  projectProgressSinglePhotoOption = ({ navigation }) => {
                 <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
                     <Icon name="delete" size={25} color='white' style={{ marginRight: 20 }} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.push('PhotoDetail')}>
+                <TouchableOpacity onPress={() => navigation.push('PhotoDetail',{categoryName : navigation.getParam('categoryName'), item : navigation.getParam('item'), sow: navigation.getParam('sow')})}>
                     <Icon name="infocirlceo" size={25} color='white' style={{ marginRight: 20 }} />
                 </TouchableOpacity>
                 <TouchableOpacity>
@@ -96,7 +96,7 @@ export const projectProgressPhotosOption = ({ navigation }) => {
             ''
         ),
         headerRight: () => (
-            <TouchableOpacity onPress={() => navigation.push('ProgressCreate')}>
+            <TouchableOpacity onPress={() => navigation.push('ProgressCreate',{categoryName : navigation.getParam('categoryName'), area_id : navigation.getParam('area_id'), project_id : navigation.getParam('project_id')})}>
                 <Icon name="plus" size={30} color='white' style={{ marginRight: 15 }} />
             </TouchableOpacity>
         ),

@@ -27,6 +27,7 @@ import {
     allUsers,
     getConditionTypes,
     getCountryCodeSource,
+    getGroupSource,
     getRemarkSource,
 } from '../../services/config';
 import { store } from '../../store/store';
@@ -51,10 +52,11 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [remarks, setRemarks] = useState([]);
     const [conditionType, setConditionType] = useState('');
     const [moveInDate, setMoveInDate] = useState(new Date());
+    const [estMoveDate, setEstMoveDate] = useState(null);
     const [memo, setMemo] = useState("");
     const [salutation, setSalutation] = useState(salutations[0]);
-    const [country_code, setCountryCode] = useState("");
-
+    const [country_code, setCountryCode] = useState("65");
+    const [countryName, setCountryName] = useState("Singapore");
     const [postalCode, setPostalCode] = useState('');
     const [roadName, setRoadName] = useState('');
     const [roadNo, setRoadNo] = useState('');
@@ -63,6 +65,7 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [normalSource, setNormalSource] = useState('');
     const [normalSourceTwo, setNormalSourceTwo] = useState('');
     const [normalNotes, setNormalNotes] = useState('');
+    const [groupId,setGroupId] = useState(1);
 
     const [status, setStatus] = useState('newlead');
     const [selectedAssign, setSelectedAssign] = useState(store.getState().loginReducer.id);
@@ -72,6 +75,8 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [userSourceOption, setUserSourceOption] = useState([]);
     const [conditionTypeOption, setConditionTypeOption] = useState([]);
     const [countryCodes, setCountryCodes] = useState([]);
+    const [countryList, setCountryList] = useState([]);
+    const [groupList, setGroupList] = useState([]);
 
     // REMARK
     const [remarkCheck, setRemarkCheck] = useState('');
@@ -80,7 +85,8 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [remarkId, setRemarkId] = useState(0);
     useEffect(() => {
         getRemarkSource().then((data) => rebuildRemarkOption(data.data));
-        getCountryCodeSource().then((data) => rebuildCountryCodeOption(data.data));
+        getCountryCodeSource().then((data) => { rebuildCountryCodeOption(data.data); rebuildCountryListOption(data.data) });
+        getGroupSource().then(data => rebuildGroupOption(data.data));
     }, []);
 
     const rebuildRemarkOption = (data) => {
@@ -93,12 +99,32 @@ const LeadCreateScreen = ({ props, navigation }) => {
         });
     };
 
+    const rebuildGroupOption = (data) => {
+        setGroupList([]);
+        data.map((value) => {
+            setGroupList((oldValue) => [
+                ...oldValue,
+                { label: value.name, value: value.id, key: value.name },
+            ]);
+        });
+    };
+
     const rebuildCountryCodeOption = (data) => {
         setCountryCodes([]);
         data.map((value) => {
             setCountryCodes((oldValue) => [
                 ...oldValue,
                 { label: value.code + " - " + value.name, value: value.code, key: value.code },
+            ]);
+        });
+    }
+
+    const rebuildCountryListOption = (data) => {
+        setCountryList([]);
+        data.map((value) => {
+            setCountryList((oldValue) => [
+                ...oldValue,
+                { label: value.name, value: value.name, key: value.name },
             ]);
         });
     }
@@ -209,12 +235,14 @@ const LeadCreateScreen = ({ props, navigation }) => {
                 budget,
                 remarks,
                 conditionType,
-                moveInDate,
+                estMoveDate,
                 normal_option_source: normalSourceTwo ? normalSourceTwo : normalSource,
                 normal_option_ref_notes: normalNotes,
                 memo,
                 salutation,
-                country_code
+                country_code,
+                country_name: countryName,
+                company_group_id: groupId
             })
         );
         setRemarkCheck('');
@@ -282,8 +310,8 @@ const LeadCreateScreen = ({ props, navigation }) => {
             behavior={Platform.OS == "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
             style={{
-                flex: 1, 
-                paddingBottom: 50, 
+                flex: 1,
+                paddingBottom: 50,
                 alignItems: 'stretch',
                 backgroundColor: '#F3F3F3'
             }}>
@@ -481,6 +509,15 @@ const LeadCreateScreen = ({ props, navigation }) => {
                             onSelect={(data) => setConditionType(data)}
                             selectedValue={conditionType}
                         />
+
+                        <SelectPicker
+                            key="GROUP_CREATE"
+                            label="Group"
+                            required={false}
+                            options={groupList}
+                            onSelect={(data) => setGroupId(data)}
+                            selectedValue={groupId}
+                        />
                         <TextField
                             key="budget_creation"
                             placeholder="Amount"
@@ -564,13 +601,27 @@ const LeadCreateScreen = ({ props, navigation }) => {
                                     onChange={(roadNo) => onRoadNoChange(roadNo)}
                                 />
                             </View>
+                            <View style={{ width: '49%' }}>
+
+                                <SelectPicker
+                                    key="COUNTRY_LIST"
+                                    options={countryList}
+                                    onSelect={(data) => setCountryName(data)}
+                                    selectedValue={countryName}
+                                />
+                            </View>
                         </View>
 
                         <DatePicker
                             testID='est_move_in_date'
                             label='Est. Move in date'
                             selectedDate={moveInDate}
-                            onChange={(value) => setMoveInDate(value)}
+                            initialDate={estMoveDate}
+                            onChange={(value) => {
+                                setMoveInDate(value);
+                                setEstMoveDate(value);
+                            }
+                            }
                         />
 
                         <LongText

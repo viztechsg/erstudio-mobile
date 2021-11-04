@@ -7,7 +7,7 @@ import { getQuotationUrl } from '../../services/quotation';
 // import {salesViewDocumentOption} from '../../general/Header/SalesHeader';
 // import Pdf from 'react-native-pdf';
 
-const SalesViewDocument = ({ navigation }) => {
+const SalesViewSIDocument = ({ navigation }) => {
     const { item, type, uri } = navigation.state.params;
     const [fixedURI, setFixedURI] = useState(uri);
 
@@ -16,10 +16,6 @@ const SalesViewDocument = ({ navigation }) => {
             item: item,
             type: type
         });
-        if(type == "Quotation" && uri == "need-fetch")
-        {
-            getQuotationUrl(item.id).then(data => setFixedURI(data));
-        }
     }, [item.id])
     return (
         <View style={{ flex: 1 }}>
@@ -27,7 +23,7 @@ const SalesViewDocument = ({ navigation }) => {
                 <View style={{ width: '80%' }}>
                     <Text style={{ color: 'white', fontSize: 16 }}>{type}</Text>
                     {
-                        (type == 'Quotation' && item.is_approved == 0) ?
+                        (item.is_approved == 0) ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
                                 This document need approval
                             </Text>
@@ -36,22 +32,6 @@ const SalesViewDocument = ({ navigation }) => {
                                 This document has been approved
                             </Text>
                     }
-
-                    {
-                        (type == 'Quotation' && item.customer_sign == null) ?
-                            <Text style={{ color: 'white', fontSize: 12 }}>
-                                This document need to be signed
-                            </Text>
-                            :
-                            <Text style={{ color: 'white', fontSize: 12 }}>
-                                This document has been signed
-                            </Text>
-                    }
-                </View>
-                <View style={{ width: '18%', alignItems: 'flex-end' }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('SalesSignDocument',{id:item.id})}>
-                        <Icon name='infocirlceo' size={20} color='white' />
-                    </TouchableOpacity>
                 </View>
             </View>
             <WebView style={{ flex: 1 }} source={{ uri: `http://docs.google.com/gview?embedded=true&url=${fixedURI}` }} />
@@ -75,4 +55,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default SalesViewDocument;
+export default SalesViewSIDocument;

@@ -16,6 +16,9 @@ import QuoAgree from '../../components/Sales/QuoAgree';
 import Icon2 from 'react-native-vector-icons/SimpleLineIcons';
 import { getSingleProject } from '../../services/sales';
 import WorkSchedule from '../../components/Sales/WorkSchedule';
+import SupplierInvoice from '../../components/Sales/SupplierInvoice';
+import { DOC_PREFIX_URL } from '../../constants/URL';
+import Agreement from '../../components/Sales/Agreement';
 
 const SalesViewScreen = ({ navigation }) => {
     const { item } = navigation.state.params;
@@ -36,39 +39,93 @@ const SalesViewScreen = ({ navigation }) => {
             content: (
                 <View>
                     {
-                        item.lead.quotations.map((item, index) => {
-                            return <QuoAgree item={item} key={++index} onViewPress={() => navigation.navigate('SalesViewDocument')} />
+                        projectData &&
+                        projectData?.lead?.quotations.map((item, index) => {
+                            return (
+                                <View>
+                                    <QuoAgree
+                                        item={item}
+                                        key={++index}
+                                        onViewPress={() => navigation.navigate('SalesViewDocument',
+                                            { item: item, type: 'Quotation', uri: "need-fetch" }
+                                        )}
+                                    />
+                                    {
+                                        item?.agreement.map((agr, i) => {
+                                            return <Agreement
+                                                item={agr}
+                                                key={++i}
+                                                onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
+                                                    { item: agr, type: 'Agreement', uri: "need-fetch" }
+                                                )}
+                                            />
+                                        })
+                                    }
+                                </View>
+                            )
+
                         })
                     }
-                    <TouchableOpacity onPress={() => navigation.navigate('SalesViewDocument')}>
-                        <Text style={{ fontSize: 16, color: '#57ADD2' }}>Agreement 001 </Text>
-                    </TouchableOpacity>
                 </View>
             ),
         },
         {
             title: 'Variation Order',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    <Text>No data</Text>
+                </View>
+            ),
         },
         {
             title: 'Completion Certificate',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    <Text>No data</Text>
+                </View>
+            ),
         },
         {
             title: 'Handover Checklist',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    <Text>No data</Text>
+                </View>
+            ),
         },
         {
             title: 'Customer Invoice',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    <Text>No data</Text>
+                </View>
+            ),
         },
         {
             title: 'Supplier PO',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    <Text>No data</Text>
+                </View>
+            ),
         },
         {
             title: 'Supplier Invoice',
-            content: 'Lorem ipsum...',
+            content: (
+                <View>
+                    {projectData &&
+                        projectData?.supplier_invoices?.map((item, index) => {
+                            return <SupplierInvoice
+                                item={item}
+                                key={++index}
+                                onViewPress={() => navigation.navigate('SalesViewSIDocument',
+                                    { item: item, type: `Supplier Invoice : ${item.supplier.name}`, uri: item.attachment_path }
+                                )}
+                            />
+                        })
+                    }
+                </View>
+            ),
         },
     ];
 
@@ -104,6 +161,9 @@ const SalesViewScreen = ({ navigation }) => {
     useEffect(() => {
         navigation.addListener('willFocus', () => {
             initData();
+            navigation.setParams({
+                item: item,
+            });
         });
     }, [navigation, item.id]);
 
@@ -249,7 +309,7 @@ const SalesViewScreen = ({ navigation }) => {
                 </View>
                 <View style={{ flexDirection: 'row' }}>
                     <View style={{ width: '50%' }}>
-                        <Text style={{ marginLeft: 20}}>Remarks</Text>
+                        <Text style={{ marginLeft: 20 }}>Remarks</Text>
                     </View>
                 </View>
                 {

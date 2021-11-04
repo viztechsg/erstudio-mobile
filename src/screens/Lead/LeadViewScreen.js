@@ -226,15 +226,18 @@ const LeadViewScreen = (props) => {
                             }}>
                             <Text style={styles.label}>Address</Text>
                             <Text style={{ fontSize: 14 }}>
-                                {data.postal_code ? data.postal_code : ''}
-                            </Text>
-                            <Text style={{ fontSize: 14 }}>
-                                {data.residence ? data.residence + ', ' : ''}
                                 {data.block_no ? data.block_no : ''}
                             </Text>
                             <Text style={{ fontSize: 14 }}>
-                                {data.road_name ? data.road_name + ', ' : ''}
+                                {data.road_name ? data.road_name : ''}
+                            </Text>
+                            <Text style={{ fontSize: 14 }}>
+                                {data.residence ? data.residence + ', ' : ''}
                                 {data.road_no ? data.road_no : ''}
+                            </Text>
+                            <Text style={{ fontSize: 14 }}>
+                                {data.country_name ? data.country_name + ', ' : ''}
+                                {data.postal_code ? data.postal_code : ''}
                             </Text>
                         </View>
                     </View>
@@ -278,7 +281,11 @@ const LeadViewScreen = (props) => {
                     <View style={styles.row}>
                         <View style={{ width: '50%' }}>
                             <Text style={styles.label}>Est. Move in date</Text>
-                            <Text style={{ fontSize: 14 }}>{moment(data.move_in_date).format('DD/MM/YYYY')}</Text>
+                            <Text style={{ fontSize: 14 }}>{
+                                data.move_in_date ?
+                            moment(data.move_in_date).format('DD/MM/YYYY')
+                            : "-"
+                            }</Text>
                         </View>
                     </View>
                 </View>

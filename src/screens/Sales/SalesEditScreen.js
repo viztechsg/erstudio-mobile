@@ -257,6 +257,13 @@ const SalesEditScreen = ({ props, navigation }) => {
             setData(data)
             setDataRemark([]);
             rebuildRemarkObject(data.remarks);
+
+            // Defatul work schedule venue
+            if(data.residence != null && data.block_no != null && data.road_name != null)
+            {
+                setVenue(data.residence+' '+data.block_no+', '+data.road_name);
+            }
+            
         });
         return () => {
             fetched = true;
@@ -280,7 +287,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                 onBackdropPress={toggleOverlay}
                 overlayStyle={{ width: '80%' }}
             >
-                <View>
+                <ScrollView style={{paddingBottom:20}}>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Schedule Details</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                         <View style={{ width: '49%' }}>
@@ -291,7 +298,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                         </View>
                     </View>
 
-                    <TextField placeholder="Venue" required={true} editable={true} label="Venue" onChange={venue => setVenue(venue)} />
+                    <TextField placeholder="Venue" required={true} editable={true} label="Venue" value={venue} onChange={venue => setVenue(venue)} />
                     <SelectPicker
                         label="Vendor"
                         required={true}
@@ -314,7 +321,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                     />
 
                     <DefaultButton textButton="SAVE DETAILS" onPress={addWorkSchedule} />
-                </View>
+                </ScrollView>
             </Overlay>
 
             {/* REMARK MODAL */}
@@ -437,7 +444,10 @@ const SalesEditScreen = ({ props, navigation }) => {
                                 placeholder="Residence"
                                 required={false}
                                 value={data.residence}
-                                onChange={(data) => setData(prevState => ({ ...prevState, residence: data }))}
+                                onChange={(residence) => {
+                                    setData(prevState => ({ ...prevState, residence: residence }))
+                                    setVenue(residence+' '+data.block_no+', '+data.road_name);
+                                }}
                             />
                         </View>
                     </View>
@@ -454,7 +464,10 @@ const SalesEditScreen = ({ props, navigation }) => {
                                 placeholder="Road Name"
                                 required={false}
                                 value={data.road_name}
-                                onChange={(data) => setData(prevState => ({ ...prevState, road_name: data }))}
+                                onChange={(road_name) => {
+                                    setData(prevState => ({ ...prevState, road_name: road_name }))
+                                    setVenue(data.residence+' '+data.block_no+', '+road_name);
+                                }}
                             />
                         </View>
                         <View style={{ width: '49%' }}>
@@ -479,7 +492,10 @@ const SalesEditScreen = ({ props, navigation }) => {
                                 placeholder="Unit No."
                                 required={false}
                                 value={data.block_no}
-                                onChange={(data) => setData(prevState => ({ ...prevState, block_no: data }))}
+                                onChange={(block_no) => {
+                                    setData(prevState => ({ ...prevState, block_no: block_no }))
+                                    setVenue(data.residence+' '+block_no+', '+data.road_name);
+                                }}
                             />
                         </View>
                     </View>

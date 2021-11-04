@@ -31,7 +31,9 @@
       "permissions": [
         "READ_CALENDAR",
         "WRITE_CALENDAR",
-        "REMINDERS"
+        "REMINDERS",
+        "CAMERA",
+        "CAMERA_ROLL"
       ]
     },
     "web": {

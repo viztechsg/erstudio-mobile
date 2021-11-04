@@ -38,6 +38,7 @@ import {
     allUsers,
     getConditionTypes,
     getCountryCodeSource,
+    getGroupSource,
     getRemarkSource,
     getVenueSource,
 } from '../../services/config';
@@ -66,12 +67,14 @@ const LeadEditScreen = ({ props, navigation }) => {
     const [remarkId, setRemarkId] = useState(0);
     const [isNormal, setIsNormal] = useState(false);
     const [countryCodes, setCountryCodes] = useState([]);
+    const [estMoveDate, setEstMoveDate] = useState(null);
 
     const [remarkCheck, setRemarkCheck] = useState('');
     const [normalSource, setNormalSource] = useState('');
     const [normalSourceTwo, setNormalSourceTwo] = useState(data?.normal_option_source);
     const [normalNotes, setNormalNotes] = useState('');
     const [appointmentDate, setAppointmentDate] = useState(new Date());
+    const [initialApptDate, setInitialApptDate] = useState(null);
     const [appointmentTime, setAppointmentTime] = useState(
         appointmentTimeOptions[0].value
     );
@@ -88,7 +91,8 @@ const LeadEditScreen = ({ props, navigation }) => {
     const [propertyTypeOption, setPropertyTypeOption] = useState([]);
     const [conditionTypeOption, setConditionTypeOption] = useState([]);
     const [salesmanOption, setSalesmanOption] = useState([]);
-
+    const [countryList, setCountryList] = useState([]);
+    const [groupList, setGroupList] = useState([]);
     const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
     const [CRValue, setCRValue] = useState('');
     const [calendar, setCalendar] = useState([]);
@@ -188,10 +192,25 @@ const LeadEditScreen = ({ props, navigation }) => {
         });
         getCountryCodeSource().then((data) => {
             setCountryCodes([]);
+            setCountryList([]);
             data.data.map((value) => {
                 setCountryCodes((oldValue) => [
                     ...oldValue,
                     { label: value.code + " - " + value.name, value: value.code, key: value.code }
+                ]);
+
+                setCountryList((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.name, key: value.name }
+                ]);
+            });
+        });
+        getGroupSource().then(data => {
+            setGroupList([]);
+            data.data.map((value) => {
+                setGroupList((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.id, key: value.name },
                 ]);
             });
         });
@@ -285,14 +304,15 @@ const LeadEditScreen = ({ props, navigation }) => {
 
     const onSelectedDate = (child) => {
         setAppointmentDate(child);
+        setInitialApptDate(child);
     };
 
     const onSelectTime = (child) => {
-        setAppointmentTime(child);
+        setHour(child);
     };
 
     const onSelectMinute = (child) => {
-        setAppointmentMinutes(child);
+        setMinute(child);
     };
 
     const onSelectStatus = (child) => {
@@ -382,6 +402,7 @@ const LeadEditScreen = ({ props, navigation }) => {
             .then(() => {
                 setAppointmentVenue('Office');
                 setAppointmentDate(new Date());
+                setInitialApptDate(null);
                 setApptSalesName(null);
                 setApptClientName(null);
                 setAppointmentTime(appointmentTimeOptions[0].value);
@@ -407,7 +428,19 @@ const LeadEditScreen = ({ props, navigation }) => {
         setAppointmentDataLog([...appointmentDataLog, appointmentItem]);
         updateLeadAppointment(appointmentItem)
             .then(setShowUpdateModal(!showUpdateModal))
-            .then(setUpdateModalData([]));
+            .then(setUpdateModalData([]))
+            .then(() => {
+                setAppointmentVenue('Office');
+                setAppointmentDate(new Date());
+                setInitialApptDate(null);
+                setApptSalesName(null);
+                setApptClientName(null);
+                setAppointmentTime(appointmentTimeOptions[0].value);
+                setHour("08");
+                setMinute("00");
+                setApptPax("");
+                setAppointmentVenueTwo("");
+            });
     };
 
     const addRemark = () => {
@@ -496,12 +529,14 @@ const LeadEditScreen = ({ props, navigation }) => {
                     conditionType: data.condition_type_id
                         ? data.condition_type_id
                         : item.condition_type_id,
-                    moveInDate: data.move_in_date,
+                    moveInDate: estMoveDate ? estMoveDate : data.move_in_date,
                     normal_option_source: normalSourceTwo ? normalSourceTwo : data.normal_option_source ? data.normal_option_source : item.normal_option_source,
                     normal_option_ref_notes: '',
                     memo: data.comments ? data.comments : item.comments,
                     salutation: data.client_title ? data.client_title : item.client_title,
-                    country_code: data.country_code ? data.country_code : item.country_code
+                    country_code: data.country_code ? data.country_code : item.country_code,
+                    country_name: data.country_name ? data.country_name : item.country_name,
+                    company_group_id: data.company_group_id ? data.company_group_id : item.company_group_id
                 },
                 item.id
             )
@@ -540,7 +575,7 @@ const LeadEditScreen = ({ props, navigation }) => {
 
     if (!data) return false;
     return (
-        <KeyboardAvoidingView behavior={Platform.OS == "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20} style={{flex:1, paddingBottom:50}}>
+        <KeyboardAvoidingView behavior={Platform.OS == "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20} style={{ flex: 1, paddingBottom: 50 }}>
             <View style={{
                 // flex: 1,
                 flexDirection: 'column',
@@ -565,9 +600,14 @@ const LeadEditScreen = ({ props, navigation }) => {
                         <DatePicker
                             required={true}
                             label="Date"
+                            initialDate={updateModalData?.date ? updateModalData.date : null}
                             selectedDate={new Date(updateModalData?.date)}
                             onChange={(data) =>
-                                setUpdateModalData((prevState) => ({ ...prevState, date: data }))
+                                {
+                                    setUpdateModalData((prevState) => ({ ...prevState, date: data }));
+
+                                }
+                                
                             }
                         />
                         <View style={{ flexDirection: 'row', marginTop: -10 }}>
@@ -577,7 +617,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                                     required={true}
                                     selectedValue={hour}
                                     options={appointmentTimeOptions}
-                                    onSelect={(data) => setHour(data)}
+                                    onSelect={(data) => {console.log(data);setHour(data)}}
                                 />
                             </View>
                             <View style={{ width: '50%' }}>
@@ -687,6 +727,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                         <DatePicker
                             required={true}
                             label="Date"
+                            initialDate={initialApptDate}
                             onChange={onSelectedDate}
                             selectedDate={appointmentDate}
                         />
@@ -872,7 +913,7 @@ const LeadEditScreen = ({ props, navigation }) => {
 
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {/* Fields */}
-                    <View style={{ padding: 20, paddingTop:0 }}>
+                    <View style={{ padding: 20, paddingTop: 0 }}>
                         <TextField
                             placeholder="Lead ID"
                             required={false}
@@ -1082,6 +1123,18 @@ const LeadEditScreen = ({ props, navigation }) => {
                             }
                         />
 
+                        <SelectPicker
+                            label="Group"
+                            required={false}
+                            options={groupList}
+                            onSelect={(data) =>
+                                setData((prevState) => ({ ...prevState, company_group_id: data }))
+                            }
+                            selectedValue={
+                                data.company_group_id ? data.company_group_id : item.company_group_id
+                            }
+                        />
+
                         {
                             store.getState().loginReducer.scopes.includes('lead-update-status') &&
                             (
@@ -1219,13 +1272,27 @@ const LeadEditScreen = ({ props, navigation }) => {
                                     value={data.road_no ? data.road_no : oldUnitNo}
                                 />
                             </View>
+                            <View style={{ width: '49%' }}>
+                                <SelectPicker
+                                    key="COUNTRY_LIST"
+                                    options={countryList}
+                                    onChange={(data) => {
+                                        setData((prevState) => ({ ...prevState, country_name: data }))
+                                    }
+                                    }
+                                    selectedValue={data.country_name ? data.country_name : item.country_name}
+                                />
+                            </View>
                         </View>
 
                         <DatePicker
                             label='Est. Move in date'
-                            selectedDate={new Date(data.move_in_date ? data.move_in_date : item.move_in_date)}
-                            onChange={(value) =>
+                            initialDate={item.move_in_date ? item.move_in_date : data.move_in_date}
+                            selectedDate={estMoveDate ? new Date(estMoveDate) : data.move_in_date ? new Date(data.move_in_date) : item.move_in_date ? new Date(item.move_in_date) : new Date()}
+                            onChange={(value) => {
+                                setEstMoveDate(value)
                                 setData((prevState) => ({ ...prevState, move_in_date: value }))
+                            }
                             }
                         />
 

@@ -80,3 +80,25 @@ export const getSowSource = () => {
     .then((data) => {return data.data})
     .catch(err => console.log(err));
 }
+
+export const getGroupSource = () => {
+    return api.get('/get-group-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getAreaSource = () => {
+    return api.get('/get-area-source', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}

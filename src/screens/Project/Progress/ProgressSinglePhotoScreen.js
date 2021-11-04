@@ -5,7 +5,14 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/FontAwesome'
 import Icon3 from 'react-native-vector-icons/MaterialCommunityIcons'
 const ProgressSinglePhotoScreen = ({ navigation }) => {
-    const { uri, desc } = navigation.state.params;
+    const { item, categoryName, sow } = navigation.state.params;
+    useEffect(() => {
+        navigation.setParams({
+            categoryName, 
+            item,
+            sow
+        });
+    },[item.id]);
     return (
         <View style={{
             flex: 1,
@@ -21,11 +28,11 @@ const ProgressSinglePhotoScreen = ({ navigation }) => {
                     height:350,
                     width:'100%'
                 }}
-                source={{ uri: uri }}
+                source={{ uri: item.path }}
                 resizeMode='stretch'
                 resizeMethod='resize'
             />
-            <Text style={{color:'white', fontSize:16, marginTop:20}}>{desc}</Text>
+            <Text style={{color:'white', fontSize:16, marginTop:20}}>{item.remark}</Text>
             {/* Card components */}
         </View>
     )

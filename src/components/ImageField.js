@@ -20,9 +20,9 @@ const ImageField = (props) => {
                 <Text style={{color:'red'}}>*</Text>
             }
             </View>
-            <TouchableOpacity>
-                <View style={{height:150, borderColor:'grey', borderRadius:8, borderWidth:2, alignItems:'center', justifyContent:'center'}}>
-                    <Icon name="pluscircleo" size={60} color="grey" />
+            <TouchableOpacity onPress={props.onPress}>
+                <View style={{height:50, borderColor:'grey', borderRadius:8, borderWidth:2, alignItems:'center', justifyContent:'center'}}>
+                    <Icon name="pluscircleo" size={40} color="grey" />
                 </View>
             </TouchableOpacity>
         </View>

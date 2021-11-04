@@ -36,13 +36,14 @@ const DatePicker = props => {
                     borderColor: 'gray',
                     borderRadius: 4,
                 }}>
-                    <Text>{moment(selectedDate).format('DD-MM-YYYY')}</Text>
+                    <Text>{(props?.initialDate == null ) ? "Please select date" : moment(selectedDate).format('DD-MM-YYYY')}</Text>
                 </View>
             </TouchableOpacity>
             {showDatePicker && (
                 <DateTimePicker
                     testID={props.testID ? props.testID : Math.random()}
                     value={selectedDate}
+                    valueDefault={selectedDate}
                     is24Hour={true}
                     display="default"
                     onChange={onChange}

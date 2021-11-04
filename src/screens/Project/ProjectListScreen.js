@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, Picker, Button, TouchableOpacity, Alert } from 'react-native';
 import { Card, Badge, Overlay } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -12,7 +12,11 @@ import {useDispatch, connect} from 'react-redux';
 import {getLeadData, deleteLead} from '../../actions/leadAction';
 import {store} from '../../store/store';
 import ProjectItem from '../../components/Project/ProjectItem';
-
+import { getSalesData } from '../../actions/salesAction';
+import { RefreshControl } from 'react-native';
+const wait = (timeout) => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+}
 const ProjectListScreen = (props) => {
     const { navigation } = props;
     const [visible, setVisible] = useState(false);
@@ -22,9 +26,11 @@ const ProjectListScreen = (props) => {
     const [date, setDate] = useState(new Date(1598051730000));
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
+    const [salesData, setSalesData] = useState([]);
 
     const [leadsData, setLeadsData] = useState([]);
     //const [selectedLead, setSelectedLead] = useState();
+    const [refreshing, setRefreshing] = useState(false);
 
     const toggleOverlay = () => {
         setVisible(!visible);
@@ -48,19 +54,26 @@ const ProjectListScreen = (props) => {
 
     const dispatch = useDispatch();
 
-    const {data} = useDispatch(getLeadData());
+    useEffect(() => {
+        dispatch(getSalesData());
+    }, []);
 
     useEffect(() => {
-        dispatch(getLeadData());
-    },[data]);
+        navigation.addListener('willFocus', () => {
+            // dispatch(getSalesData());
+            onRefresh();
+        });
+    }, [navigation])
 
-    store.subscribe(()=>{
-        setLeadsData(store.getState().leadsReducer.data);
+    store.subscribe(() => {
+        setSalesData(store.getState().salesReducer.data);
     });
 
-    const handleDeleteLead = (id) => {
-        dispatch(deleteLead(id));
-    }
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        dispatch(getSalesData());
+        wait(3000).then(() => setRefreshing(false))
+    }, [refreshing]);
     
 
     const leadDeletePress = id =>{
@@ -173,7 +186,7 @@ const ProjectListScreen = (props) => {
             </Overlay>
             <View style={{ flexDirection: 'row' }}>
                 <View style={{ width: '50%', justifyContent: 'flex-start' }}>
-                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({leadsData.length})</Text>
+                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({salesData.length})</Text>
                 </View>
                 <View style={{ width: '50%', justifyContent: 'flex-end' }}>
                     <TouchableOpacity style={{ backgroundColor: 'white', width: 150, height: 40, alignSelf: 'flex-end', justifyContent: 'center' }} onPress={toggleOverlay}>
@@ -183,8 +196,13 @@ const ProjectListScreen = (props) => {
             </View>
             <View style={{ flex: 1, marginTop: 7, margin: -20 }}>
                 <FlatList
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                        />}
                     keyExtractor={item => item.id.toString()}
-                    data={leadsData}
+                    data={salesData}
                     renderItem={({ item }) => {
                         return (
                             <Swipeout

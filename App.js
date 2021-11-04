@@ -21,7 +21,7 @@ import SalesListScreen from './src/screens/Sales/SalesListScreen'
 //Custome Header
 import homeOption from './src/general/Header/HomeHeader';
 import { leadsEditOption, leadsOption, leadsViewOption } from './src/general/Header/LeadsHeader';
-import { salesOption, salesViewOption, salesViewDocumentOption } from './src/general/Header/SalesHeader';
+import { salesOption, salesViewOption, salesViewDocumentOption, salesViewSIDocumentOption, salesViewAgreementDocumentOption } from './src/general/Header/SalesHeader';
 import LeadEditScreen from './src/screens/Lead/LeadEditScreen';
 import LeadRemarkScreen from './src/screens/Lead/LeadRemarkScreen';
 import LeadViewScreen from './src/screens/Lead/LeadViewScreen';
@@ -46,6 +46,9 @@ import DefectListScreen from './src/screens/Project/Defect/DefectListScreen';
 import DefectCreationScreen from './src/screens/Project/Defect/DefectCreationScreen';
 import DefectEditScreen from './src/screens/Project/Defect/DefectEditScreen';
 import DefectViewScreen from './src/screens/Project/Defect/DefectViewScreen';
+import SalesViewSIDocument from './src/screens/Sales/SalesViewSIDocument';
+import SalesViewAgreementDocument from './src/screens/Sales/SalesViewAgreementDocument';
+import SalesSignAgreement from './src/screens/Sales/SalesSignAgreement';
 
 const authNavigator = createStackNavigator(
   {
@@ -153,8 +156,31 @@ const SalesStack = createStackNavigator(
       screen: SalesViewDocument,
       navigationOptions: salesViewDocumentOption
     },
+    SalesViewSIDocument:{
+      screen: SalesViewSIDocument,
+      navigationOptions: salesViewSIDocumentOption
+    },
+    SalesViewAgreementDocument:{
+      screen: SalesViewAgreementDocument,
+      navigationOptions: salesViewAgreementDocumentOption
+    },
     SalesSignDocument: {
       screen: SalesSignDocument,
+      navigationOptions: {
+        title: '',
+        headerTintColor: 'white',
+        headerStyle: {
+          backgroundColor: 'black',
+          shadowOpacity: 0.25,
+          shadowOffset: {
+            height: 1,
+          },
+          shadowRadius: 5,
+        },
+      }
+    },
+    SalesSignAgreement: {
+      screen: SalesSignAgreement,
       navigationOptions: {
         title: '',
         headerTintColor: 'white',

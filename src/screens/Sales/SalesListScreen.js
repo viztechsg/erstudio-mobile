@@ -58,7 +58,6 @@ const SalesListScreen = (props) => {
     }, [navigation])
 
     store.subscribe(() => {
-        console.log(store.getState().salesReducer.data)
         setSalesData(store.getState().salesReducer.data);
     });
 

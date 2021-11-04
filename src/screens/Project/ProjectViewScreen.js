@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/FontAwesome'
 import Icon3 from 'react-native-vector-icons/MaterialCommunityIcons'
 const ProjectViewScreen = ({ navigation }) => {
-
+    const {item} = navigation.state.params;
     return (
         <View style={{
             flex: 1,
@@ -22,7 +22,7 @@ const ProjectViewScreen = ({ navigation }) => {
             {/* Card components */}
             <View style={{ padding: 20 }}>
                 <View style={[styles.wrapper2, { backgroundColor: 'transparent' }]}>
-                    <TouchableOpacity onPress={() => navigation.push('ProjectProgress')} style={styles.card}>
+                    <TouchableOpacity onPress={() => navigation.push('ProjectProgress',{item:item})} style={styles.card}>
                         <View style={{ alignItems: 'center' }} >
                             <Icon3 name="progress-check" size={60} color='white' />
                             <Text style={{ color: 'white', fontSize: 18, marginTop: 10 }}>PROGRESS</Text>

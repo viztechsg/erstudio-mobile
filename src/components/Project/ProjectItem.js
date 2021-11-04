@@ -17,7 +17,7 @@ const ProjectItem = props => {
             <View style={styles.wrapper}>
                 <View style={styles.col_1}>
                     <Text style={{ color: 'black', fontSize: 12 }}>
-                        (project id)
+                        {props.item.project_no}
                     </Text>
                     <Text style={{ color: 'black', fontSize: 16, marginTop: 10 }}>
                         {props.item.client_name}
@@ -25,10 +25,10 @@ const ProjectItem = props => {
                 </View>
                 <View style={styles.col_2}>
                     <Text style={{ color: 'grey', fontSize: 10 }}>
-                        Date created:
+                        Date created: 
                     </Text>
                     <Text style={{ color: 'black', fontSize: 10 }}>
-                        {moment(props.item.date).format('YYYY-MM-DD')}
+                        {moment(props.item.created_at).format('DD/MM/YYYY')}
                     </Text>
                 </View>
 
