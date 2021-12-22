@@ -41,29 +41,31 @@ const SalesViewScreen = ({ navigation }) => {
                     {
                         projectData &&
                         projectData?.lead?.quotations.map((item, index) => {
-                            return (
-                                <View>
-                                    <QuoAgree
-                                        item={item}
-                                        key={++index}
-                                        onViewPress={() => navigation.navigate('SalesViewDocument',
-                                            { item: item, type: 'Quotation', uri: "need-fetch" }
-                                        )}
-                                    />
-                                    {
-                                        item?.agreement.map((agr, i) => {
-                                            return <Agreement
-                                                item={agr}
-                                                key={++i}
-                                                onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
-                                                    { item: agr, type: 'Agreement', uri: "need-fetch" }
-                                                )}
-                                            />
-                                        })
-                                    }
-                                </View>
-                            )
-
+                            if(item.status !="draft")
+                            {
+                                return (
+                                    <View>
+                                        <QuoAgree
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => navigation.navigate('SalesViewDocument',
+                                                { item: item, type: 'Quotation', uri: "need-fetch", project_data: projectData }
+                                            )}
+                                        />
+                                        {
+                                            item?.agreement.map((agr, i) => {
+                                                return <Agreement
+                                                    item={agr}
+                                                    key={++i}
+                                                    onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
+                                                        { item: agr, type: 'Agreement', uri: "need-fetch", project_data: projectData }
+                                                    )}
+                                                />
+                                            })
+                                        }
+                                    </View>
+                                )
+                            }
                         })
                     }
                 </View>
@@ -119,7 +121,7 @@ const SalesViewScreen = ({ navigation }) => {
                                 item={item}
                                 key={++index}
                                 onViewPress={() => navigation.navigate('SalesViewSIDocument',
-                                    { item: item, type: `Supplier Invoice : ${item.supplier.name}`, uri: item.attachment_path }
+                                    { item: item, type: `Supplier Invoice : ${item.supplier.name}`, uri: item.attachment_path, project_data: projectData }
                                 )}
                             />
                         })

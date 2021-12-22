@@ -18,10 +18,10 @@ const DefectRemarkItem = props => {
                 {/* HEADER */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                     <View style={{ width: '40%' }}>
-                        <Text style={styles.textSize}>Mark Lim</Text>
+                        <Text style={styles.textSize}>{props.designer || "-"}</Text>
                     </View>
                     <View style={{ width: '40%', alignItems: 'flex-end' }}>
-                        <Text style={styles.textSize}>1 days ago</Text>
+                        <Text style={styles.textSize}>{moment(props.item.created_at).format('DD/MM/YYYY') || "-"}</Text>
                     </View>
                     <View style={{ width: '20%', alignItems: 'flex-end' }}>
                         <TouchableOpacity>
@@ -33,10 +33,13 @@ const DefectRemarkItem = props => {
                 {/* BODY */}
                 <View style={{ marginVertical: 10 }}>
                     <Text style={[styles.textSize, { textAlign: 'justify' }]}>
-                        Lorem ipsum dolor sir amet, consetetur sadipscing elitr, sed diam
+                    {props.item.remark}
                     </Text>
                     <Text style={[styles.textSize, { marginTop: 10 }]}>
-                        Vendor(s): Seng Hock Pte Ltd, ABE pte ltd
+                    Vendor(s): 
+                        {
+                            props.item.vendors.join(', ')
+                        }
                     </Text>
                 </View>
             </View>

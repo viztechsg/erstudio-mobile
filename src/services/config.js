@@ -102,3 +102,14 @@ export const getAreaSource = () => {
     .then((data) => {return data.data})
     .catch(err => console.log(err));
 }
+
+export const getSoiSource = () => {
+    return api.get('/get-inspection-list', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import {
     Text,
     View,
@@ -17,15 +17,18 @@ const ProjectInspectionItem = props => {
             <View style={styles.wrapper}>
                 <View style={{ flexDirection: 'row' }}>
                     <View style={{ width: '50%', justifyContent: 'flex-start' }}>
-                        <Text style={{ color: 'black', fontSize: 20 }}>{props.item.sow}</Text>
-                        <Text style={{ color: 'black', fontSize: 14 }}>{props.item.client_name}</Text>
+                        <Text style={{ color: 'black', fontSize: 20 }}>{props.item.scope_of_work.name}</Text>
+                        <Text style={{ color: 'black', fontSize: 14 }}>{props.item.vendor.name}</Text>
                     </View>
                     <View style={{ width: '50%', justifyContent: 'flex-start', alignItems:'flex-end' }}>
-                        <Badge
-                            status={(props.item.status == "passed") ? "success" : "error"}
+                        <View style={{ backgroundColor:(props.item.status == "passed") ? "green" : (props.item.status == "pending") ? "orange" : "red", width:'50%',padding:2, borderRadius:50, alignItems:'center'  }}>
+                            <Text style={{color:'white', textTransform: "capitalize",fontSize: 12, }}>{props.item.status}</Text>
+                        </View>
+                        {/* <Badge
+                            status={(props.item.status == "passed") ? "success" : (props.item.status == "pending") ? "warning" : "error" }
                             containerStyle={{}}
                             value={<Text style={{ color: 'white', margin: 15, fontSize: 12, textTransform: "capitalize" }}>{props.item.status}</Text>}
-                        />
+                        /> */}
                         <Text style={{ fontSize: 10, alignItems: 'flex-end', marginTop: 25 }}>
                             Date created: {moment(props.item.date).format('YYYY-MM-DD')}
                         </Text>
@@ -55,4 +58,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default ProjectInspectionItem;
+export default memo(ProjectInspectionItem);

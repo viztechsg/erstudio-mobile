@@ -28,7 +28,7 @@ const ProjectViewScreen = ({ navigation }) => {
                             <Text style={{ color: 'white', fontSize: 18, marginTop: 10 }}>PROGRESS</Text>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.push('ProgressInspectionList')} style={styles.card}>
+                    <TouchableOpacity onPress={() => navigation.push('ProgressInspectionList',{item:item})} style={styles.card}>
                         <View style={{ alignItems: 'center' }}>
                             <Icon name="search1" size={60} color='white' />
                             <Text style={{ color: 'white', fontSize: 18, marginTop: 10 }}>INSPECTION</Text>
@@ -36,7 +36,7 @@ const ProjectViewScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
                 <View style={[styles.wrapper2, { backgroundColor: 'transparent' }]}>
-                    <TouchableOpacity onPress={() => navigation.push('ProgressDefectList')} style={styles.card}>
+                    <TouchableOpacity onPress={() => navigation.push('ProgressDefectList',{project:item})} style={styles.card}>
                         <View style={{ alignItems: 'center' }}>
                             <Icon3 name="image-broken-variant" size={60} color='white' />
                             <Text style={{ color: 'white', fontSize: 18, marginTop: 10 }}>DEFECTS</Text>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, Button, SafeAreaView, Alert, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, TextInput, ScrollView, Button, SafeAreaView, Alert, TouchableOpacity, Platform, Image, ActivityIndicator } from 'react-native';
 import TextField from '../../../components/TextField';
 import SelectPicker from '../../../components/SelectPicker';
 import LongText from '../../../components/LongText';
@@ -41,6 +41,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
     const [visible, setVisible] = useState(false);
     const [visible2, setVisible2] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -73,7 +74,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
         setVisible2(!visible2);
     }
 
-    const pickImage = async (type) => {
+    const pickImage = async () => {
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -82,14 +83,10 @@ const ProgressCreateScreen = ({ props, navigation }) => {
             exif: true,
             // base64: true
         }
-        if (type == "camera") {
-            var result = await ImagePicker.launchCameraAsync(options);
-        }
-        else {
-            var result = await ImagePicker.launchImageLibraryAsync(options);
-        }
+
+        var result = await ImagePicker.launchImageLibraryAsync(options);
         const base64 = await FileSystem.readAsStringAsync(result.uri, { encoding: 'base64' });
-        toggleOverlay();
+
         if (!result.cancelled) {
             setFirstImage('data:image/png;base64,' + base64);
         }
@@ -98,10 +95,38 @@ const ProgressCreateScreen = ({ props, navigation }) => {
         var captureOn = strDate[0].split(":").join("-")
 
         setFirstCaptureOn(new Date(captureOn));
-
+        if (Platform.OS != "ios") {
+            toggleOverlay();
+        }
     };
 
-    const pickImageList = async (index, type) => {
+    const captureImage = async () => {
+        const options = {
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: false,
+            aspect: [4, 3],
+            quality: 0.1,
+            exif: true,
+            // base64: true
+        }
+
+        var result = await ImagePicker.launchCameraAsync(options);
+        const base64 = await FileSystem.readAsStringAsync(result.uri, { encoding: 'base64' });
+
+        if (!result.cancelled) {
+            setFirstImage('data:image/png;base64,' + base64);
+        }
+
+        var strDate = result.exif['DateTime'].split(" ");
+        var captureOn = strDate[0].split(":").join("-")
+
+        setFirstCaptureOn(new Date(captureOn));
+        if (Platform.OS != "ios") {
+            toggleOverlay();
+        }
+    };
+
+    const pickImageList = async (idx = "") => {
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -110,22 +135,43 @@ const ProgressCreateScreen = ({ props, navigation }) => {
             exif: true
         }
 
-        if (type == "camera") {
-            var result = await ImagePicker.launchCameraAsync(options);
-        }
-        else {
-            var result = await ImagePicker.launchImageLibraryAsync(options);
-        }
+        var result = await ImagePicker.launchImageLibraryAsync(options);
 
         var strDate = result.exif['DateTime'] ? result.exif['DateTime'].split(" ") : null;
         var captureOn = strDate ? strDate[0].split(":").join("-") : null;
         const base64 = await FileSystem.readAsStringAsync(result.uri, { encoding: 'base64' });
 
         if (!result.cancelled) {
-            handleImageListCHange(index, base64, "add", captureOn);
+            handleImageListCHange(idx || currentIndex, base64, "add", captureOn);
         }
 
-        toggleOverlay2();
+        if (Platform.OS != "ios") {
+            toggleOverlay2();
+        }
+    };
+
+    const captureImageList = async (idx = "") => {
+        const options = {
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: false,
+            aspect: [4, 3],
+            quality: 0.1,
+            exif: true
+        }
+
+        var result = await ImagePicker.launchCameraAsync(options);
+
+        var strDate = result.exif['DateTime'] ? result.exif['DateTime'].split(" ") : null;
+        var captureOn = strDate ? strDate[0].split(":").join("-") : null;
+        const base64 = await FileSystem.readAsStringAsync(result.uri, { encoding: 'base64' });
+
+        if (!result.cancelled) {
+            handleImageListCHange(idx || currentIndex, base64, "add", captureOn);
+        }
+        if (Platform.OS != "ios") {
+            toggleOverlay2();
+        }
+
     };
 
     const deletImageById = id => {
@@ -144,7 +190,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
             item.image = "";
             item.capture_on = null;
         }
-        
+
         items[index] = item;
         setImages(items);
     }
@@ -168,6 +214,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
     }
 
     const onSubmitCreation = () => {
+        setIsUploading(!isUploading);
         let imagePayload = {
             image: firstImage,
             remark: firstRemark,
@@ -181,10 +228,11 @@ const ProgressCreateScreen = ({ props, navigation }) => {
             area_id: areaId,
             scope_of_work_id: scope_of_work,
             remark: remark,
-            images: newImagesList
+            images: newImagesList,
+            area_name: categoryName
         }
 
-        addProjectProgress(payload).then(() => wait(1500).then(() =>  navigation.push('ProjectProgressPhoto', {
+        addProjectProgress(payload).then(setIsUploading(!isUploading)).then(() => wait(1500).then(() => navigation.navigate('ProjectProgressPhoto', {
             categoryName: categoryName, area_id: area_id, project_id: project_id
         })));
     }
@@ -199,27 +247,39 @@ const ProgressCreateScreen = ({ props, navigation }) => {
         }}>
             {/* Modal first image */}
             <Overlay
+                isVisible={isUploading}
+                overlayStyle={{ width: '50%' }}
+            >
+                <ActivityIndicator
+                    animating={isUploading}
+                    style={{ height: 100 }}
+                    color="#C00"
+                    size="large"
+                />
+                <Text style={{ textAlign: 'center' }}>Uploading, please wait..</Text>
+            </Overlay>
+            <Overlay
                 isVisible={visible}
                 onBackdropPress={toggleOverlay}
                 overlayStyle={{ width: '80%' }}
             >
                 <SafeAreaView>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Select Image</Text>
-                    <DefaultButton textButton="Browse" onPress={() => pickImage("browse")} />
-                    <DefaultButton textButton="Capture" onPress={() => pickImage("camera")} />
+                    <DefaultButton textButton="Browse" onPress={pickImage} />
+                    <DefaultButton textButton="Capture" onPress={captureImage} />
                 </SafeAreaView>
             </Overlay>
 
             {/* Modal images list */}
             <Overlay
                 isVisible={visible2}
-                onBackdropPress={toggleOverlay2}
+                onBackdropPress={() => toggleOverlay2()}
                 overlayStyle={{ width: '80%' }}
             >
                 <SafeAreaView>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Select Image</Text>
-                    <DefaultButton textButton="Browse" onPress={() => pickImageList(currentIndex, "browse")} />
-                    <DefaultButton textButton="Capture" onPress={() => pickImageList(currentIndex, "camera")} />
+                    <DefaultButton textButton="Browse" onPress={() => pickImageList(currentIndex)} />
+                    <DefaultButton textButton="Capture" onPress={() => captureImageList(currentIndex)} />
                 </SafeAreaView>
             </Overlay>
             <View>
@@ -252,7 +312,25 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                         {(firstImage != "") && <Image source={{ uri: firstImage }} style={{ width: '100%', height: 300, borderRadius: 5, resizeMode: 'contain' }} />}
 
                         {
-                            (firstImage == "") && <ImageField required={false} onPress={toggleOverlay} />
+                            (firstImage == "" && Platform.OS != "ios") && <ImageField required={false} onPress={() => toggleOverlay()} />
+                        }
+
+                        {
+                            (firstImage == "" && Platform.OS == "ios") &&
+                            (
+                                <View>
+                                    <TouchableOpacity onPress={pickImage}>
+                                        <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 5 }}>
+                                            <Text>Browse</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={captureImage}>
+                                        <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text>Capture</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            )
                         }
 
                         {
@@ -260,7 +338,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                             (
                                 <View style={{ justifyContent: "space-around", flexDirection: "row", marginTop: 10 }}>
                                     <View style={{ width: '49%' }}>
-                                        <TouchableOpacity onPress={toggleOverlay}>
+                                        <TouchableOpacity onPress={() => toggleOverlay()}>
                                             <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }}>
                                                 <Text>Retake</Text>
                                             </View>
@@ -269,6 +347,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                                     <View style={{ width: '49%' }}>
                                         <TouchableOpacity onPress={() => {
                                             setFirstImage("");
+                                            setFirstCaptureOn(null);
                                         }
                                         }>
                                             <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }}>
@@ -286,6 +365,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                                     label="Capture On"
                                     initialDate={firstCaptureOn}
                                     required={false}
+                                    disabled={true}
                                     onChange={(data) => setFirstCaptureOn(data)}
                                     selectedDate={firstCaptureOn} />
                             )
@@ -296,6 +376,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                             <DatePicker
                                 label="Capture On"
                                 initialDate={firstCaptureOn}
+                                disabled={true}
                                 required={false}
                                 onChange={(data) => setFirstCaptureOn(data)}
                                 selectedDate={firstCaptureOn} />
@@ -316,8 +397,34 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                                 {(item.image != "") && <Image source={{ uri: item.image }} style={{ width: '100%', height: 300, borderRadius: 5, resizeMode: 'contain' }} />}
 
                                 {
-                                    (item.image == "") && <ImageField required={false} onPress={() => { toggleOverlay2(); setCurrentIndex(index) }} />
+                                    (item.image == "" && Platform.OS != "ios") && <ImageField required={false} onPress={() => { toggleOverlay2(); setCurrentIndex(index) }} />
                                 }
+
+                                {
+                                    (item.image == "" && Platform.OS == "ios") &&
+                                    (
+                                        <View>
+                                            <TouchableOpacity onPress={() => {
+                                                pickImageList(index);
+                                            }}>
+                                                <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 5 }}>
+                                                    <Text>Browse</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={
+                                                () => {
+
+                                                    captureImageList(index);
+                                                }
+                                            }>
+                                                <View style={{ height: 50, borderColor: 'grey', borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Text>Capture</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )
+                                }
+
 
                                 {
                                     (item.image != "") &&
@@ -350,6 +457,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                                             label={`Capture on`}
                                             initialDate={item.capture_on}
                                             required={false}
+                                            disabled={true}
                                             onChange={(data) => handleCaptureOnImageList(index, data)}
                                             selectedDate={item.capture_on}
                                         />
@@ -362,6 +470,7 @@ const ProgressCreateScreen = ({ props, navigation }) => {
                                             label="Capture On"
                                             initialDate={item.capture_on}
                                             required={false}
+                                            disabled={true}
                                             onChange={(data) => handleCaptureOnImageList(index, data)}
                                             selectedDate={item.capture_on}
                                         />

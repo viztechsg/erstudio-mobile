@@ -10,7 +10,35 @@ export function approveSI(quo_id) {
         }
     })
         .then(response => {
-            console.log(response.data)
+           return response.data;
+        })
+        .catch(err => console.log(err.response));
+}
+
+export function rejectSI(si_id, reject_reason) {
+    return api.put(`/supplier-invoice/${si_id}/reject`, {
+        reject_reason
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data;
+        })
+        .catch(err => console.log(err.response));
+}
+
+export function holdSI(si_id) {
+    return api.put(`/supplier-invoice/${si_id}/onhold`, {
+        type: "onhold"
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data;
         })
         .catch(err => console.log(err.response));
 }

@@ -3,9 +3,11 @@ import { Alert } from 'react-native';
 import { StyleSheet, Text, View, Image, Button, CheckBox, TouchableOpacity } from 'react-native';
 import SignatureScreen from 'react-native-signature-canvas';
 import { signAgreement } from '../../services/agreement';
+import { Checkbox } from 'react-native-paper';
 
 const SalesSignAgreement = ({ navigation, onOK }) => {
     const [signature, setSign] = useState(null);
+    const [agree, setAgree] = useState(false);
     const { id } = navigation.state.params;
     const ref = useRef();
 
@@ -15,6 +17,7 @@ const SalesSignAgreement = ({ navigation, onOK }) => {
 
     const handleClear = () => {
         ref.current.clearSignature();
+        setSign(null);
     }
 
     const handleEnd = () => {
@@ -22,6 +25,17 @@ const SalesSignAgreement = ({ navigation, onOK }) => {
     };
 
     const handleConfirm = () => {
+        if(signature == null)
+        {
+            Alert.alert("Signing","Please sign first");
+            return;
+        }
+
+        if(agree == false)
+        {
+            Alert.alert("Terms & Conditions","Please agree");
+            return;
+        }
         signAgreement(id,signature).then(Alert.alert("SIGNED")).then(handleClear);
     }
 
@@ -57,7 +71,7 @@ const SalesSignAgreement = ({ navigation, onOK }) => {
                 />
                 <View style={styles.row}>
                     <View style={{ justifyContent: 'flex-start', flexDirection: 'row', padding: 5 }}>
-                        <CheckBox />
+                    <Checkbox.Android status={agree ? "checked" : "unchecked"} onPress={() => setAgree(!agree)} color='green' />
                         <Text style={{ fontSize: 12 }}>I agree to all terms & conditions stated in this agreement</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>

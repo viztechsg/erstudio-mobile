@@ -36,6 +36,7 @@ import { addProjectRemark, addProjectWorkSchedule, getSingleProject } from '../.
 import WorkSchedule from '../../components/Sales/WorkSchedule'
 import { getRemarkSource, getSowSource, getVendorSource } from '../../services/config'
 import { RadioButton } from 'react-native-paper';
+import { getProjectVendorList } from '../../services/projectDefect'
 
 const SalesEditScreen = ({ props, navigation }) => {
 
@@ -67,8 +68,9 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [end_date, setEndDate] = useState("");
     const [venue, setVenue] = useState("");
     const [scope_of_work, setSOW] = useState("");
-    const [vendor_id, setVendor] = useState(1);
+    const [vendor_id, setVendor] = useState("");
     const [other_sow, setOtherSOW] = useState("");
+    const [sowId, setSowId] = useState("");
 
     const [sowOptions, setSowOptions] = useState([]);
     const [vendorOption, setVendorOption] = useState([]);
@@ -78,6 +80,27 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [remarkCheckboxes, setRemarkCheckboxes] = useState([]);
     const [remarkModal, setRemarkModal] = useState(false);
     const [remarkCheck, setRemarkCheck] = useState('');
+
+    const initVendor = () => {
+        setVendor("");
+        if (sowId != "") {
+            getProjectVendorList(item.id, sowId).then((data) => {
+                setVendorOption([]);
+                data.map((value) => {
+                    if(value.vendor_id != null)
+                    {
+                        setVendorOption((oldValue) => [
+                            ...oldValue,
+                            { label: value.vendor.name, value: value.vendor.id, key: value.vendor.name },
+                        ]);
+                    }
+                });
+            })
+        }
+        else{
+            setVendorOption([]);
+        }
+    }
 
     useEffect(() => {
         getPropertyType().then((data) => {
@@ -89,21 +112,24 @@ const SalesEditScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-        getVendorSource().then((data) => {
-            setVendorOption([]);
-            data.data.map((value) => {
-                setVendorOption((oldValue) => [
-                    ...oldValue,
-                    { label: value.name, value: value.id, key: value.name },
-                ]);
-            });
-        });
+        // getVendorSource().then((data) => {
+        //     setVendorOption([]);
+        //     data.data.map((value) => {
+        //         setVendorOption((oldValue) => [
+        //             ...oldValue,
+        //             { label: value.name, value: value.id, key: value.name },
+        //         ]);
+        //     });
+        // });
+
+        initVendor();
+
         getSowSource().then((data) => {
             setSowOptions([]);
             data.data.map((value) => {
                 setSowOptions((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name },
+                    { label: value.name, value: value.id, key: value.name },
                 ]);
             });
         });
@@ -241,6 +267,7 @@ const SalesEditScreen = ({ props, navigation }) => {
             project_id: item.id,
             vendor_id,
             venue,
+            sow_id: sowId,
             scope_of_work: finalSOW,
             start_date,
             end_date
@@ -248,8 +275,13 @@ const SalesEditScreen = ({ props, navigation }) => {
 
         addProjectWorkSchedule(workSchedule)
             .then(setWorkSchedules([...workSchedules, workSchedule]))
-            .then(toggleOverlay());
+            .then(toggleOverlay())
+            .then(setSowId(""));
     }
+
+    useEffect(() => {
+        initVendor();
+    }, [sowId, item.id]);
 
     useEffect(() => {
         let fetched = false;
@@ -291,28 +323,29 @@ const SalesEditScreen = ({ props, navigation }) => {
                     <Text style={{ fontSize: 20, color: 'grey' }}>Schedule Details</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                         <View style={{ width: '49%' }}>
-                            <DatePicker required={true} label="Start Date" key='DATE_START_1' onChange={startDate => setStartDate(startDate)} />
+                            <DatePicker required={true} label="Start Date" initialDate={start_date || null} key='DATE_START_1' onChange={startDate => setStartDate(startDate)} />
                         </View>
                         <View style={{ width: '49%' }}>
-                            <DatePicker required={true} label="End Date" key='DATE_END_1' onChange={endDate => setEndDate(endDate)} />
+                            <DatePicker required={true} label="End Date" initialDate={end_date || null} key='DATE_END_1' onChange={endDate => setEndDate(endDate)} />
                         </View>
                     </View>
 
                     <TextField placeholder="Venue" required={true} editable={true} label="Venue" value={venue} onChange={venue => setVenue(venue)} />
+
+                    <SelectPicker
+                        label="Scope of Work"
+                        required={true}
+                        selectedValue={scope_of_work}
+                        onSelect={(sow,index) => {setSOW(sowOptions[index-1].label); setSowId(sow);}}
+                        options={sowOptions}
+                    />
+
                     <SelectPicker
                         label="Vendor"
                         required={true}
                         selectedValue={vendor_id}
                         onSelect={vendorId => setVendor(vendorId)}
                         options={vendorOption}
-                    />
-
-                    <SelectPicker
-                        label="Scope of Work"
-                        required={true}
-                        selectedValue={scope_of_work}
-                        onSelect={sow => setSOW(sow)}
-                        options={sowOptions}
                     />
 
                     <LongText
@@ -513,6 +546,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                     <DatePicker
                         required={false}
                         label="Project Start Date"
+                        initialDate={data.project_start || null}
                         selectedDate={data.project_start}
                         onChange={(data) => setData(prevState => ({ ...prevState, project_start: data }))}
                     />

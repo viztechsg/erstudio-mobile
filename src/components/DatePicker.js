@@ -30,7 +30,7 @@ const DatePicker = props => {
                     <Text style={{ color: 'red' }}>*</Text>
                 }
             </View>
-            <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)} key="DATE_BUTTON">
+            <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)} key="DATE_BUTTON" disabled={props.disabled ? props.disabled : false}>
                 <View style={{
                     backgroundColor: '#fff', height: 40, elevation: 1, justifyContent: 'center', paddingLeft: 10, borderWidth: 1,
                     borderColor: 'gray',

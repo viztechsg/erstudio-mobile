@@ -54,7 +54,7 @@ const SelectPicker = props => {
                     key={Math.random()}
                     style={pickerSelectStyles}
                     value={selectedValue}
-                    onValueChange={(value) => { setSelectedValue(value); props.onSelect(value) }}
+                    onValueChange={(value, index) => { setSelectedValue(value); props.onSelect(value,index) }}
                     items={props.options ? props.options : options}
                     disabled={props.disabled ? props.disabled : false}
                 />

@@ -39,3 +39,17 @@ export function signQuotation(quo_id,customer_sign) {
         })
         .catch(err => console.log(err.response));
 }
+
+export function rejectQuotation(quo_id, cancel_reason) {
+    return api.put(`/cancel-quotation/${quo_id}`, {
+        cancel_reason
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            console.log(response.data)
+        })
+        .catch(err => console.log(err.response));
+}

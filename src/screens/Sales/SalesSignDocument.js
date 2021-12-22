@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Alert } from 'react-native';
-import { StyleSheet, Text, View, Image, Button, CheckBox, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image, Button, TouchableOpacity } from 'react-native';
+import { Checkbox } from 'react-native-paper';
 import SignatureScreen from 'react-native-signature-canvas';
 import { signQuotation } from '../../services/quotation';
 
 const SalesSignDocument = ({ navigation, onOK }) => {
     const [signature, setSign] = useState(null);
-    const { id } = navigation.state.params;
+    const [agree, setAgree] = useState(false);
+    const { id, item } = navigation.state.params;
     const ref = useRef();
 
     const handleSignature = signature => {
@@ -15,6 +17,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
 
     const handleClear = () => {
         ref.current.clearSignature();
+        setSign(null);
     }
 
     const handleEnd = () => {
@@ -22,7 +25,19 @@ const SalesSignDocument = ({ navigation, onOK }) => {
     };
 
     const handleConfirm = () => {
-        signQuotation(id,signature).then(Alert.alert("SIGNED")).then(handleClear);
+        if(signature == null)
+        {
+            Alert.alert("Signing","Please sign first");
+            return;
+        }
+        console.log(signature)
+
+        if(agree == false)
+        {
+            Alert.alert("Terms & Conditions","Please agree");
+            return;
+        }
+        signQuotation(id,signature).then(Alert.alert("Quotation Signing","Quotation has been signed")).then(handleClear).then(navigation.navigate('SalesView', { item: item }));
     }
 
     const style = `
@@ -57,7 +72,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
                 />
                 <View style={styles.row}>
                     <View style={{ justifyContent: 'flex-start', flexDirection: 'row', padding: 5 }}>
-                        <CheckBox />
+                        <Checkbox.Android status={agree ? "checked" : "unchecked"} onPress={() => setAgree(!agree)} color='green' />
                         <Text style={{ fontSize: 12 }}>I agree to all terms & conditions stated in this quotation/agreement</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>

@@ -16,7 +16,7 @@ const ProjectProgressPhotoScreen = ({ navigation }) => {
             area_id,
             project_id
         });
-        getProjectProgress(project_id, area_id).then(data => setData(data));
+        getProjectProgress(project_id, area_id,categoryName).then(data => setData(data));
     }, [area_id, project_id]);
 
     useEffect(() => {
@@ -26,7 +26,7 @@ const ProjectProgressPhotoScreen = ({ navigation }) => {
                 area_id,
                 project_id
             });
-            getProjectProgress(project_id, area_id).then(data => setData(data));
+            getProjectProgress(project_id, area_id,categoryName).then(data => setData(data));
         });
     }, [navigation, area_id, project_id]);
 
@@ -48,6 +48,7 @@ const ProjectProgressPhotoScreen = ({ navigation }) => {
                         keyExtractor={(item, index) => index.toString()}
                         renderItem={({ item }) => {
                             var sow = item.scope_of_work.name;
+                            var comments = item.comments;
                             return (
                                 <View style={{ marginBottom: 20 }}>
                                     <Text style={{ color: 'white', fontSize: 16 }}>{moment(item.created_at).format('DD/MM/YYYY')} {item.scope_of_work.name}</Text>
@@ -59,9 +60,11 @@ const ProjectProgressPhotoScreen = ({ navigation }) => {
                                                     style={{
                                                         flex: 1,
                                                         flexDirection: 'column',
-                                                        margin: 1
+                                                        margin: 3
                                                     }}>
-                                                    <TouchableOpacity onPress={() => navigation.push('ProgressSinglePhoto', { item: item, categoryName, sow })}>
+                                                    
+                                                    <TouchableOpacity onPress={() => navigation.push('ProgressSinglePhoto', { item: item, categoryName, sow, area_id, project_id, comments })}>
+                                                    {item.remark && <Icon2 name="sticky-note" size={20} color="yellow" style={{ position: 'absolute', top: 5, right: 10, zIndex:9 }} />}
                                                         <Image
                                                             style={{
                                                                 justifyContent: 'center',

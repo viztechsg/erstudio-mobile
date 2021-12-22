@@ -4,58 +4,96 @@ import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useState } from 'react';
 import { getQuotationUrl } from '../../services/quotation';
+import { useCallback } from 'react';
 // import {salesViewDocumentOption} from '../../general/Header/SalesHeader';
 // import Pdf from 'react-native-pdf';
+import LoadingState from '../../components/LoadingState';
+const wait = (timeout) => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+}
 
 const SalesViewDocument = ({ navigation }) => {
-    const { item, type, uri } = navigation.state.params;
+    const { item, type, uri, project_data } = navigation.state.params;
     const [fixedURI, setFixedURI] = useState(uri);
-
-    useEffect(() => { 
+    const [refreshing, setRefreshing] = useState(false);
+    useEffect(() => {
         navigation.setParams({
             item: item,
-            type: type
+            type: type,
+            project_data
         });
-        if(type == "Quotation" && uri == "need-fetch")
-        {
-            getQuotationUrl(item.id).then(data => setFixedURI(data));
-        }
     }, [item.id])
+
+    useEffect(() => {
+            setRefreshing(true)
+            getQuotationUrl(item.id).then(data => {setFixedURI(data)});
+            wait(2000).then(()=>setRefreshing(false));
+    },[item.id]);
+
+    const reloadDoc = () => {
+        setRefreshing(true);
+        getQuotationUrl(item.id).then(data => {setFixedURI(data); console.log(data)});
+        wait(3000).then(() => setRefreshing(false))
+    };
+
     return (
         <View style={{ flex: 1 }}>
+            
             <View style={{ padding: 20, backgroundColor: '#202020', flexDirection: 'row' }}>
+            
                 <View style={{ width: '80%' }}>
+                <LoadingState isUploading={refreshing} content="Loading document.." />
                     <Text style={{ color: 'white', fontSize: 16 }}>{type}</Text>
                     {
-                        (type == 'Quotation' && item.is_approved == 0) ?
+                        (type == 'Quotation' && item.is_approved == 0 && item.status != 'declined') ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
                                 This document need approval
                             </Text>
                             :
-                            <Text style={{ color: 'white', fontSize: 12 }}>
-                                This document has been approved
-                            </Text>
+                            (item.status != 'declined') ?
+                                <Text style={{ color: 'white', fontSize: 12 }}>
+                                    This document has been approved
+                                </Text> : <View></View>
                     }
 
                     {
-                        (type == 'Quotation' && item.customer_sign == null) ?
+                        (type == 'Quotation' && item.customer_sign == null && item.status != 'declined') ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
                                 This document need to be signed
                             </Text>
                             :
-                            <Text style={{ color: 'white', fontSize: 12 }}>
-                                This document has been signed
-                            </Text>
+                            (item.status != 'declined') ?
+                                <Text style={{ color: 'white', fontSize: 12 }}>
+                                    This document has been signed
+                                </Text> : <View></View>
+                    }
+                    {
+                        item.status == "declined" && <Text style={{ color: 'white', fontSize: 12 }}>
+                            This document has been rejected
+                        </Text>
                     }
                 </View>
-                <View style={{ width: '18%', alignItems: 'flex-end' }}>
-                    <TouchableOpacity onPress={() => navigation.navigate('SalesSignDocument',{id:item.id})}>
-                        <Icon name='infocirlceo' size={20} color='white' />
-                    </TouchableOpacity>
-                </View>
+                {
+                    item.status != "declined" &&
+                    <View style={{ width: '18%', alignItems: 'flex-end' }}>
+                        <TouchableOpacity onPress={() => navigation.navigate('SalesSignDocument', { id: item.id, item: project_data })}>
+                            <Icon name='infocirlceo' size={20} color='white' />
+                        </TouchableOpacity>
+                    </View>
+                }
             </View>
-            <WebView style={{ flex: 1 }} source={{ uri: `http://docs.google.com/gview?embedded=true&url=${fixedURI}` }} />
-        </View>
+            
+            <View style={{height:30, padding:5}}>
+                <TouchableOpacity onPress={reloadDoc}>
+                    <Text style={{textAlign:'center'}}>Reload document</Text>
+                </TouchableOpacity>
+            </View>
+
+            {
+                (fixedURI != "need-fetch") && (<WebView style={{ flex: 1 }} source={{ uri: `http://docs.google.com/viewer?url=${fixedURI}` }} />)
+            }
+            
+        </View >
 
 
     )

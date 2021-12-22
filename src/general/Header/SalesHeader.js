@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, Platform, Dimensions } from 'react-native';
 import { Overlay } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/AntDesign';
 import DefaultButton from '../../components/DefaultButton';
-import { approveAgreement } from '../../services/agreement';
-import { approveQuotation } from '../../services/quotation';
-import { approveSI } from '../../services/supplierInvoice';
+import { approveAgreement, rejectAgreement } from '../../services/agreement';
+import { approveQuotation, rejectQuotation } from '../../services/quotation';
+import { approveSI, rejectSI } from '../../services/supplierInvoice';
 import { store } from '../../store/store';
+import { RadioButton } from 'react-native-paper';
+import LongText from '../../components/LongText';
 export const salesOption = ({ navigation }) => {
     return {
         headerLeft: () => (
@@ -114,29 +116,147 @@ export const salesViewDocumentOption = ({ navigation }) => {
             ''
         ),
         headerRight: props => {
-            const { item, type } = navigation.state.params;
+            const { item, type, project_data } = navigation.state.params;
             const [visible, setVisible] = useState(false);
+            const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
+            const [CRValue, setCRValue] = useState('');
             const toggleOverlay = () => {
                 setVisible(!visible);
             };
 
+            const cancelReason = [
+                {
+                    value: 'No Answer',
+                    id: 'No Answer',
+                },
+                {
+                    value: 'Messages no reply',
+                    id: 'Messages no reply',
+                },
+                {
+                    value: 'Wrong number',
+                    id: 'Wrong number',
+                },
+                {
+                    value: 'Customer request call back',
+                    id: 'Customer request call back',
+                },
+                {
+                    value: 'Etc.',
+                    id: 'Etc.',
+                },
+            ];
+
+            const CRToggle = () => {
+                setCancelReasonToggle(!cancelReasonToggle);
+                setCRValue('');
+            };
+
             const approveQuo = quo_id => {
                 approveQuotation(quo_id).then(
-                    Alert.alert("Quotation has been approved")
+                    Alert.alert("Approve Quotation", "Quotation has been approved")
                 )
                 toggleOverlay();
-                navigation.navigate('SalesViewDocument',
-                    { item: item, type: type, uri: "need-fetch" }
-                )
+                // navigation.navigate('SalesViewDocument',
+                //     { item: item, type: type, uri: "need-fetch" }
+                // )
+                navigation.navigate('SalesView', { item: project_data })
             }
+
+            const rejectQuo = (quo_id) => {
+                if (CRValue == '' || CRValue == null) {
+                    Alert.alert('Reason', 'Please choose or type a reason');
+                    return;
+                }
+
+                rejectQuotation(quo_id, CRValue)
+                    .then(
+                        toggleOverlay()
+                    )
+                    .then(
+                        CRToggle()
+                    )
+                    .then(
+                        Alert.alert('Reject Qotation', 'Quotation has been rejected')
+                    )
+                    .then(
+                        navigation.navigate('SalesView', { item: project_data })
+                    )
+                // REJECT quotation
+            }
+
+            const onHold = () => {
+                toggleOverlay();
+                Alert.alert('Quotation On Hold', 'Quotation has been set to on hold');
+                navigation.navigate('SalesView', { item: project_data })
+            }
+
             return (
                 <View style={{ flexDirection: 'row' }}>
-                    <Overlay isVisible={visible} onBackdropPress={toggleOverlay} >
+                    {/* REMARK CANCEL REASON */}
+                    <Overlay
+                        key="CR"
+                        isVisible={cancelReasonToggle}
+                        onBackdropPress={CRToggle}
+                        overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }}
+                    >
                         <View>
-                            <Text>Are you sure want to approve this {(type == "Quotation/Agreement") ? "Quotation" : "Supplier Invoice"}</Text>
-                            <DefaultButton textButton="Approve" onPress={() => approveQuo(item.id)} />
+                            <Text
+                                style={
+                                    {
+                                        color: 'grey', fontWeight: '800', fontSize: 18, fontSize: 16,
+                                        fontWeight: 'bold'
+                                    }
+                                }>
+                                Cancel reason
+                            </Text>
+                            {cancelReason.map((item, index) => {
+                                return (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <RadioButton.Android
+                                            value={item.value}
+                                            status={CRValue == item.value ? 'checked' : 'unchecked'}
+                                            onPress={() => setCRValue(item.value)}
+                                        />
+                                        <Text style={{ fontSize: 14 }}>{item.value}</Text>
+                                    </View>
+                                );
+                            })}
+                            <LongText value={CRValue} onChange={(remark) => setCRValue(remark)} />
+                            <DefaultButton onPress={() => rejectQuo(item.id)} textButton="SAVE CHANGES" />
                         </View>
                     </Overlay>
+                    <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }} >
+                        <View>
+                            {
+                                item.status == "draft" && <Text>This quotation still in draft</Text>
+                            }
+                            {
+                                item.status == "declined" && <Text>This quotation has been rejected, please create a new one</Text>
+                            }
+
+                            {
+                                item.status == "approved" && <Text>This quotation has approved</Text>
+                            }
+
+                            {
+                                item.status == "requested" && <Text>Are you sure want to approve this {(type == "Quotation") ? "Quotation" : "Supplier Invoice"} ?</Text>
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="Approve" onPress={() => approveQuo(item.id)} />
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="On Hold" onPress={onHold} />
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="Reject" onPress={CRToggle} />
+                            }
+                        </View>
+                    </Overlay>
+
                     <TouchableOpacity onPress={toggleOverlay}>
                         <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
                             {
@@ -176,8 +296,37 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
             ''
         ),
         headerRight: props => {
-            const { item } = navigation.state.params;
+            const { item, project_data } = navigation.state.params;
             const [visible, setVisible] = useState(false);
+            const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
+            const [CRValue, setCRValue] = useState('');
+            const cancelReason = [
+                {
+                    value: 'No Answer',
+                    id: 'No Answer',
+                },
+                {
+                    value: 'Messages no reply',
+                    id: 'Messages no reply',
+                },
+                {
+                    value: 'Wrong number',
+                    id: 'Wrong number',
+                },
+                {
+                    value: 'Customer request call back',
+                    id: 'Customer request call back',
+                },
+                {
+                    value: 'Etc.',
+                    id: 'Etc.',
+                },
+            ];
+
+            const CRToggle = () => {
+                setCancelReasonToggle(!cancelReasonToggle);
+                setCRValue('');
+            };
             const toggleOverlay = () => {
                 setVisible(!visible);
             };
@@ -188,12 +337,91 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                 )
                 toggleOverlay();
             }
+
+            const onReject = si_id => {
+                toggleOverlay();
+                CRToggle();
+                rejectSI(si_id, CRValue)
+                    .then(
+                        Alert.alert('Reject Supplier Invoice', 'Supplier Invoice has been rejected')
+                    )
+                    .then(
+                        navigation.navigate('SalesView', { item: project_data })
+                    )
+            }
+
+            const holdSI = si_id => {
+                toggleOverlay();
+                holdSI(si_id)
+                    .then(
+                        Alert.alert('Hold Supplier Invoice', 'Supplier Invoice has been rejected')
+                    )
+                    .then(
+                        navigation.navigate('SalesView', { item: project_data })
+                    )
+            }
             return (
                 <View style={{ flexDirection: 'row' }}>
+                    {/* REMARK CANCEL REASON */}
+                    <Overlay
+                        key="CR_SI"
+                        isVisible={cancelReasonToggle}
+                        onBackdropPress={CRToggle}
+                        overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }}
+                    >
+                        <View>
+                            <Text
+                                style={
+                                    {
+                                        color: 'grey', fontWeight: '800', fontSize: 18, fontSize: 16,
+                                        fontWeight: 'bold'
+                                    }
+                                }>
+                                Cancel reason
+                            </Text>
+                            {cancelReason.map((item, index) => {
+                                return (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <RadioButton.Android
+                                            value={item.value}
+                                            status={CRValue == item.value ? 'checked' : 'unchecked'}
+                                            onPress={() => setCRValue(item.value)}
+                                        />
+                                        <Text style={{ fontSize: 14 }}>{item.value}</Text>
+                                    </View>
+                                );
+                            })}
+                            <LongText value={CRValue} onChange={(remark) => setCRValue(remark)} />
+                            <DefaultButton onPress={() => onReject(item.id)} textButton="SAVE CHANGES" />
+                        </View>
+                    </Overlay>
                     <Overlay isVisible={visible} onBackdropPress={toggleOverlay} >
                         <View>
-                            <Text>Are you sure want to approve this Supplier Invoice?</Text>
-                            <DefaultButton textButton="Approve" onPress={() => approveQuo(item.id)} />
+                            {
+                                item.status == "Waiting Approval" && <Text>Are you sure want to approve this Supplier Invoice?</Text>
+                            }
+
+                            {
+                                item.status == "Approved" && <Text>This Supplier Invoice already approved</Text>
+                            }
+
+                            {
+                                item.status == "On Hold" && <Text>This Supplier Invoice still on hold</Text>
+                            }
+
+                            {
+                                item.status == "Rejected" && <Text>This Supplier Invoice already rejected</Text>
+                            }
+
+                            {
+                                (item.status == "Waiting Approval" || item.status == "On Hold") && <DefaultButton textButton="YES" onPress={() => approveQuo(item.id)} />
+                            }
+                            {
+                                item.status == "Waiting Approval" && <DefaultButton textButton="ON HOLD" onPress={() => holdSI(item.id)} />
+                            }
+                            {
+                                (item.status == "Waiting Approval" || item.status == "On Hold") && <DefaultButton textButton="REJECT" onPress={CRToggle} />
+                            }
                         </View>
                     </Overlay>
                     <TouchableOpacity onPress={toggleOverlay}>
@@ -235,8 +463,68 @@ export const salesViewAgreementDocumentOption = ({ navigation }) => {
             ''
         ),
         headerRight: props => {
-            const { item } = navigation.state.params;
+
+            const { item, type, project_data } = navigation.state.params;
             const [visible, setVisible] = useState(false);
+            const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
+            const [CRValue, setCRValue] = useState('');
+
+            const cancelReason = [
+                {
+                    value: 'No Answer',
+                    id: 'No Answer',
+                },
+                {
+                    value: 'Messages no reply',
+                    id: 'Messages no reply',
+                },
+                {
+                    value: 'Wrong number',
+                    id: 'Wrong number',
+                },
+                {
+                    value: 'Customer request call back',
+                    id: 'Customer request call back',
+                },
+                {
+                    value: 'Etc.',
+                    id: 'Etc.',
+                },
+            ];
+
+            const CRToggle = () => {
+                setCancelReasonToggle(!cancelReasonToggle);
+                setCRValue('');
+            };
+
+            const rejectQuo = (quo_id) => {
+                if (CRValue == '' || CRValue == null) {
+                    Alert.alert('Reason', 'Please choose or type a reason');
+                    return;
+                }
+
+                rejectAgreement(quo_id, CRValue)
+                    .then(
+                        toggleOverlay()
+                    )
+                    .then(
+                        CRToggle()
+                    )
+                    .then(
+                        Alert.alert('Reject Agreement', 'Agreement has been rejected')
+                    )
+                    .then(
+                        navigation.navigate('SalesView', { item: project_data })
+                    )
+                // REJECT quotation
+            }
+
+            const onHold = () => {
+                toggleOverlay();
+                Alert.alert('Agreement On Hold', 'Agreement has been set to on hold');
+                navigation.navigate('SalesView', { item: project_data })
+            }
+
             const toggleOverlay = () => {
                 setVisible(!visible);
             };
@@ -249,13 +537,66 @@ export const salesViewAgreementDocumentOption = ({ navigation }) => {
             }
             return (
                 <View style={{ flexDirection: 'row' }}>
-                    <Overlay isVisible={visible} onBackdropPress={toggleOverlay} >
+                                        <Overlay
+                        key="CR"
+                        isVisible={cancelReasonToggle}
+                        onBackdropPress={CRToggle}
+                        overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }}
+                    >
                         <View>
-                            <Text>Are you sure want to approve this Agreement?</Text>
-                            <DefaultButton textButton="Approve" onPress={() => approveQuo(item.id)} />
+                            <Text
+                                style={
+                                    {
+                                        color: 'grey', fontWeight: '800', fontSize: 18, fontSize: 16,
+                                        fontWeight: 'bold'
+                                    }
+                                }>
+                                Cancel reason
+                            </Text>
+                            {cancelReason.map((item, index) => {
+                                return (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <RadioButton.Android
+                                            value={item.value}
+                                            status={CRValue == item.value ? 'checked' : 'unchecked'}
+                                            onPress={() => setCRValue(item.value)}
+                                        />
+                                        <Text style={{ fontSize: 14 }}>{item.value}</Text>
+                                    </View>
+                                );
+                            })}
+                            <LongText value={CRValue} onChange={(remark) => setCRValue(remark)} />
+                            <DefaultButton onPress={() => rejectQuo(item.id)} textButton="SAVE CHANGES" />
                         </View>
                     </Overlay>
-                    <TouchableOpacity onPress={toggleOverlay}>
+                    <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }} >
+                        <View>
+                            {
+                                item.status == "declined" && <Text>This agreement has been rejected, please create a new one</Text>
+                            }
+
+                            {
+                                item.status == "approved" && <Text>This agreement has approved</Text>
+                            }
+
+                            {
+                                item.status == "requested" && <Text>Are you sure want to approve this {(type == "Agreement") ? "Agreement" : "Supplier Invoice"} ?</Text>
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="Approve" onPress={() => approveQuo(item.id)} />
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="On Hold" onPress={onHold} />
+                            }
+
+                            {
+                                item.status == "requested" && <DefaultButton textButton="Reject" onPress={CRToggle} />
+                            }
+                        </View>
+                    </Overlay>
+                    <TouchableOpacity onPress={toggleOverlay} key="TOCUAHSD">
                         <View style={{ width: 60, alignItems: 'center', justifyContent: 'center' }}>
                             {
                                 item.is_approved == 1 ? (<Icon name="check" size={30} color='green' style={{ marginRight: 15 }} />) : (<Icon name="warning" size={30} color='orange' style={{ marginRight: 15 }} />)

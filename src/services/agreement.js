@@ -40,3 +40,17 @@ export function signAgreement(agreement_id,client_sign) {
         })
         .catch(err => console.log(err.response));
 }
+
+export function rejectAgreement(id, cancel_reason) {
+    return api.put(`/agreement/${id}/reject`, {
+        cancel_reason
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            console.log(response.data)
+        })
+        .catch(err => console.log(err.response));
+}

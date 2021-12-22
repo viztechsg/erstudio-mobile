@@ -4,13 +4,17 @@ import styles from '../styles';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/FontAwesome'
 import Icon3 from 'react-native-vector-icons/MaterialCommunityIcons'
+import moment from 'moment';
 const ProgressSinglePhotoScreen = ({ navigation }) => {
-    const { item, categoryName, sow } = navigation.state.params;
+    const { item, categoryName, area_id, project_id, sow, comments } = navigation.state.params;
     useEffect(() => {
+        console.log(item);
         navigation.setParams({
             categoryName, 
             item,
-            sow
+            sow,
+            area_id,
+            project_id
         });
     },[item.id]);
     return (
@@ -29,10 +33,12 @@ const ProgressSinglePhotoScreen = ({ navigation }) => {
                     width:'100%'
                 }}
                 source={{ uri: item.path }}
-                resizeMode='stretch'
+                resizeMode='contain'
                 resizeMethod='resize'
             />
             <Text style={{color:'white', fontSize:16, marginTop:20}}>{item.remark}</Text>
+            <Text style={{color:'white', fontSize:16, marginTop:20}}>{comments}</Text>
+            <Text style={{color:'white', fontSize:16, marginTop:20}}>{moment(item.capture_on).format('DD/MM/YYYY')}</Text>
             {/* Card components */}
         </View>
     )

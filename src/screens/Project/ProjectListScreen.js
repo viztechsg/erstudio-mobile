@@ -205,16 +205,7 @@ const ProjectListScreen = (props) => {
                     data={salesData}
                     renderItem={({ item }) => {
                         return (
-                            <Swipeout
-                                right={[
-                                    {
-                                        component: <SwipeoutButton onDeletePress={() => leadDeletePress(item.id)} onEditPress={() => navigation.navigate('SalesEdit')} />,
-                                    }
-                                ]}
-                                autoClose
-                            >
                                 <ProjectItem item={item} status="follow" onViewPress={() => navigation.navigate('ProjectView',{ item: item })} />
-                            </Swipeout>
                         )
                     }}
                 />

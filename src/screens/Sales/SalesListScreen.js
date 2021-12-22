@@ -113,23 +113,6 @@ const SalesListScreen = (props) => {
             <Overlay isVisible={visible} onBackdropPress={toggleOverlay} overlayStyle={{ width: '80%' }}>
                 <View>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Filter</Text>
-                    {/* <View
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        <Text style={{ fontSize: 14, color: 'grey' }}>Status</Text>
-                        <Picker
-                            selectedValue={selectedValue}
-                            style={{
-                                height: 50,
-                            }}
-                            onValueChange={(itemValue, itemIndex) => setSelectedValue(itemValue)}
-                        >
-                            <Picker.Item label="Ready" value="ready" />
-                            <Picker.Item label="Closed" value="closed" />
-                        </Picker>
-                    </View> */}
                     <View
                         style={{
                             marginTop: 10,
@@ -139,12 +122,14 @@ const SalesListScreen = (props) => {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={{ width: '50%' }}>
                                 <DatePicker
+                                    initialDate={defaultLabel}
                                     selectedDate={defaultLabel}
                                     onChange={(value) => setDefaultLabel(value)}
                                 />
                             </View>
                             <View style={{ width: '50%' }}>
                                 <DatePicker
+                                    initialDate={defaultLabel2}
                                     selectedDate={defaultLabel2}
                                     onChange={(value) => { setDefaultLabel2(value) }}
                                 />

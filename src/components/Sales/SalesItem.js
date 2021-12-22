@@ -25,29 +25,44 @@ const SalesItem = props => {
     // {
     //     icon = 'error-outline'
     // }
-    else if(props.item.lead.quotations.length > 0)
-    {
-        props.item.lead.quotations.map((item,index) => {
-            if(item.agreement?.length > 0 && !props.item.lead.handover)
-            {
-                icon = 'checkcircleo'
-                iconColor = 'green'
-                iconProvider = 'icon2'
-                textLabel = "Agreement"
+    else if (props.item.lead.quotations.length > 0) {
+        props.item.lead.quotations.map((item, index) => {
+            if (item.agreement?.length > 0 && !props.item.lead.handover) {
+                if (item.agreement[item.agreement.length - 1].status == "requested" && item.agreement[item.agreement.length - 1].status != "declined") {
+                    icon = 'error-outline'
+                    // iconColor = 'green'
+                    // iconProvider = 'icon1'
+                    textLabel = "Agreement"
+                }
+                else {
+                    icon = 'checkcircleo'
+                    iconColor = 'green'
+                    iconProvider = 'icon2'
+                    textLabel = "Agreement"
+                }
+
             }
-            else if(props.item.lead.handover?.length > 0)
-            {
+            else if (props.item.lead.handover?.length > 0) {
                 icon = 'checkcircleo'
                 iconColor = 'green'
                 iconProvider = 'icon2'
                 textLabel = "Handover"
             }
-            else{
+            else if(item.status != "approved" && item.status != "declined")
+            {
+                icon = 'error-outline'
+                iconColor = 'orange'
+                iconProvider = 'icon1'
+                textLabel = "Quotation"
+            }
+            else if(item.status == "approved")
+            {
                 icon = 'checkcircleo'
                 iconColor = 'green'
                 iconProvider = 'icon2'
                 textLabel = "Quotation"
             }
+
         })
 
     }
@@ -79,11 +94,11 @@ const SalesItem = props => {
 
                 </View>
                 <View style={styles.col_2}>
-                    <View style={{ flexDirection: 'row', justifyContent:'space-around' }}>
-                        <View style={{ backgroundColor: 'black', borderRadius: 50, paddingVertical:2, paddingHorizontal:8, width:90, alignItems:'center',marginRight:5 }}>
-                            <Text style={{ color: 'white',fontSize: 12, textTransform: "capitalize" }}>{textLabel}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                        <View style={{ backgroundColor: 'black', borderRadius: 50, paddingVertical: 2, paddingHorizontal: 8, width: 90, alignItems: 'center', marginRight: 5 }}>
+                            <Text style={{ color: 'white', fontSize: 12, textTransform: "capitalize" }}>{textLabel}</Text>
                         </View>
-                        <View style={{ backgroundColor: 'black', borderRadius: 10, justifyContent:'center', padding:1 }}>
+                        <View style={{ backgroundColor: 'black', borderRadius: 10, justifyContent: 'center', padding: 1 }}>
                             {
                                 (iconProvider == 'icon1') ? <Icon1 name={icon} size={20} color={iconColor} /> : <Icon2 name={icon} size={20} color={iconColor} />
                             }

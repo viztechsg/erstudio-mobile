@@ -17,7 +17,7 @@ export function getSingleProject(project_id) {
 
 export function addProjectWorkSchedule(data)
 {
-    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work } = data;
+    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work,sow_id } = data;
     return api.post('/work-schedules',
     {
         project_id,
@@ -25,7 +25,8 @@ export function addProjectWorkSchedule(data)
         venue,
         scope_of_work,
         start_date,
-        end_date
+        end_date,
+        sow_id
     },
     {
         headers: {

@@ -11,22 +11,21 @@ import { Card, Badge } from 'react-native-elements';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/AntDesign';
 const InspectionRemarkItem = props => {
-
     return (
         <TouchableOpacity onPress={() => props.onViewPress()}>
             <View style={styles.wrapper}>
                 {/* HEADER */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-around'}}>
                     <View style={{ width: '40%' }}>
-                        <Text style={styles.textSize}>Mark Lim</Text>
+                        <Text style={styles.textSize}>{props.designer || "-"}</Text>
                     </View>
-                    <View style={{ width: '20%', alignItems: 'flex-end' }}>
-                        <Text style={styles.textSize}>1 days ago</Text>
+                    <View style={{ width: '23%', alignItems: 'flex-end' }}>
+                        <Text style={styles.textSize}>{moment(props.item.created_at).format('DD/MM/YYYY') || "-"}</Text>
                     </View>
-                    <View style={{ width: '20%', alignItems: 'flex-end' }}>
-                        <Text style={styles.textSize}>Failed</Text>
+                    <View style={{ width: '19%', alignItems: 'flex-end' }}>
+                        <Text style={styles.textSize}>{props.item.status || "pending"}</Text>
                     </View>
-                    <View style={{ width: '20%', alignItems: 'flex-end' }}>
+                    <View style={{ width: '19%', alignItems: 'flex-end' }}>
                         <TouchableOpacity>
                             <Icon name="ellipsis1" size={25} color='grey' />
                         </TouchableOpacity>
@@ -35,11 +34,14 @@ const InspectionRemarkItem = props => {
 
                 {/* BODY */}
                 <View style={{ marginVertical: 10 }}>
-                    <Text style={[styles.textSize, { textAlign: 'justify' }]}>
-                        Lorem ipsum dolor sir amet, consetetur sadipscing elitr, sed diam
+                    <Text style={[styles.textSize]}>
+                        {props.item.remark}
                     </Text>
                     <Text style={[styles.textSize, { marginTop: 10 }]}>
-                        Vendor(s): Seng Hock Pte Ltd, ABE pte ltd
+                        Vendor(s): 
+                        {
+                            props.item.vendors.join(', ')
+                        }
                     </Text>
                 </View>
             </View>
@@ -64,7 +66,7 @@ const styles = StyleSheet.create({
         paddingRight: 10
     },
     textSize: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight:'800'
     }
 });

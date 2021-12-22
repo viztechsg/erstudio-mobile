@@ -13,6 +13,8 @@ import SelectPicker from '../../../components/SelectPicker';
 import DefaultButton from '../../../components/DefaultButton';
 import { SafeAreaView } from 'react-native';
 import { RefreshControl } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
+import TextField from '../../../components/TextField';
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
@@ -22,6 +24,7 @@ const ProjectProgressScreen = ({ navigation }) => {
     const [areaId, setAreaId] = useState("");
     const [visible, setVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [free_area, setFreeArea] = useState("");
     const { item } = navigation.state.params;
 
     const toggleOverlay = () => {
@@ -30,11 +33,12 @@ const ProjectProgressScreen = ({ navigation }) => {
 
     const initData = () => {
         getProjectArea(item.id).then((data) => {
+            console.log(data)
             setCategories([]);
-            data.map((value) => {
+            data.map((value, index) => {
                 setCategories((oldValue) => [
                     ...oldValue,
-                    { id: value.area_id, project_id: value.project_id, name: value.area.name },
+                    { id: index, project_id: value.project_id, name: value.area ? value.area.name : value.area_name, area_id: value.area_id || null },
                 ]);
             });
         }).then(console.log(categories));
@@ -44,21 +48,25 @@ const ProjectProgressScreen = ({ navigation }) => {
         initData();
         getAreaSource().then(data => {
             setAreaList([]);
-            data.data.map((value) => {
+            data.data.map((value, index) => {
                 setAreaList((oldValue) => [
                     ...oldValue,
-                    { key: value.id, value: value.id, label: value.name },
+                    { key: index, value: value.id, label: value.name },
                 ]);
             });
         });
-    }, [item.id]);
+    }, [item.id,refreshing]);
 
     const addArea = () => {
         let payload = {
             project_id: item.id,
-            area_id: areaId
+            area_id: areaId,
+            free_area: free_area
         }
-        addProjectArea(payload).then(data => {toggleOverlay(),onRefresh()});
+        addProjectArea(payload).then(data => { toggleOverlay(), onRefresh() }).then(() => {
+            setFreeArea("")
+            setAreaId("");
+        });
     }
 
     const onRefresh = useCallback(() => {
@@ -90,7 +98,9 @@ const ProjectProgressScreen = ({ navigation }) => {
                         options={areaList}
                     />
 
-                    <DefaultButton textButton="SAVE DETAILS" onPress={() => addArea() } />
+                    <TextField label="Add free text area" onChange={ data => setFreeArea(data)} />
+
+                    <DefaultButton textButton="SAVE DETAILS" onPress={() => addArea()} />
                 </SafeAreaView>
             </Overlay>
             <View style={{ padding: 20 }}>
@@ -113,25 +123,24 @@ const ProjectProgressScreen = ({ navigation }) => {
                 </View>
 
             </View>
-            <View>
-                <FlatList
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                        />}
-                    keyExtractor={item => item.id.toString()}
-                    data={categories}
-                    renderItem={({ item }) => {
-                        return (
-                            <ProjectProgressItem category={item.name} onViewPress={() => navigation.push('ProjectProgressPhoto', {
-                                categoryName:item.name, area_id: item.id, project_id: item.project_id
-                            })} />
-                        )
-                    }}
-                />
-            </View>
-            <View>
+            <ScrollView>
+            <FlatList
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}
+                keyExtractor={item => item.id.toString()}
+                data={categories}
+                renderItem={({ item }) => {
+                    return (
+                        <ProjectProgressItem category={item.name} onViewPress={() => navigation.navigate('ProjectProgressPhoto', {
+                            categoryName: item.name, area_id: item.area_id, project_id: item.project_id
+                        })} />
+                    )
+                }}
+            />
+            <View style={{ marginBottom: 30 }}>
                 <TouchableOpacity onPress={toggleOverlay}>
                     <View style={{ backgroundColor: 'white', height: 55, padding: 20, justifyContent: 'center', flexDirection: 'row' }}>
                         <View style={{ width: '50%' }}>
@@ -144,6 +153,7 @@ const ProjectProgressScreen = ({ navigation }) => {
                     </View>
                 </TouchableOpacity>
             </View>
+            </ScrollView>
         </View>
     )
 }

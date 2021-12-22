@@ -24,7 +24,7 @@ const ProjectProgressItem = props => {
 const styles = StyleSheet.create({
     wrapper: {
         backgroundColor: 'white',
-        height: 60,
+        height: 70,
         padding: 20,
         flexDirection: 'row',
         margin: 1,
