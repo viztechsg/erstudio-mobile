@@ -35,6 +35,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { allUsers } from '../../services/config';
 import SelectPicker from '../../components/SelectPicker';
 import DatePicker from '../../components/DatePicker';
+import { leadList } from '../../services/lead';
 
 const wait = (timeout) => {
     return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -61,13 +62,14 @@ const LeadListScreen = (props) => {
     const [selectedValue, setSelectedValue] = useState('');
     const [allUser, setAllUser] = useState([]);
     const [defaultLabel, setDefaultLabel] = useState(new Date());
-    const [defaultLabel2, setDefaultLabel2] = useState(nextDay);
+    const [defaultLabel2, setDefaultLabel2] = useState(new Date());
     const [selectedUser, setSelectedUser] = useState(null);
     const [dateType, setDateType] = useState(1);
 
     const [leadsData, setLeadsData] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     //const [selectedLead, setSelectedLead] = useState();
+
 
     const fetchUser = () => {
         setAllUser([]);
@@ -128,14 +130,15 @@ const LeadListScreen = (props) => {
     const filterLead = () => {
         toggleOverlay();
         setRefreshing(true);
-        dispatch(
-            getLeadData(
-                selectedValue == null ? '' : selectedValue,
-                moment(defaultLabel).format('YYYY-MM-DD'),
-                moment(defaultLabel2).format('YYYY-MM-DD'),
-                selectedUser == null ? '' : selectedUser
-            )
-        );
+
+        leadList(
+            selectedValue == null ? '' : selectedValue,
+            moment(defaultLabel).format('YYYY-MM-DD'),
+            moment(defaultLabel2).format('YYYY-MM-DD'),
+            selectedUser == null ? '' : selectedUser
+        ).then((data) => {
+            setLeadsData(rebuildNewLeadData(data));
+        });
         // navigation.setParams({filterStatus : selectedValue})
         wait(3000)
             .then(() => setRefreshing(false))
@@ -149,23 +152,26 @@ const LeadListScreen = (props) => {
 
     useEffect(() => {
         fetchUser();
-        dispatch(
-            getLeadData(
-                navigation.getParam('filterStatus', ''),
-                '',
-                '',
-                selectedUser == null ? '' : selectedUser
-            )
-        );
+        setRefreshing(true);
+        leadList(
+            navigation.getParam('filterStatus', ''),
+            '',
+            '',
+            selectedUser == null ? '' : selectedUser
+        ).then((data) => {
+            setRefreshing(false);
+            setLeadsData(rebuildNewLeadData(data));
+        });
         // rebuildNewLeadData();
-    }, [filterStatus,needAttention, navigation]);
+    }, [filterStatus, needAttention, navigation]);
 
     const rebuildNewLeadData = (data) => {
         let item = [];
         var endTime = moment();
         if (navigation.getParam('filterStatus', '') == "newlead" || navigation.getParam('filterStatus', '') == "reassign") {
+            console.log("A")
             if (navigation.getParam('needAttention', '') == "newlead-need") {
-                
+
                 data.map((value, index) => {
                     var hours = moment(endTime).workingDiff(moment(value.created_at), 'hours', true);
                     if (hours >= 4 && value.remarks.length < 1) {
@@ -173,34 +179,35 @@ const LeadListScreen = (props) => {
                     }
                 });
             }
-            else{
+            else {
                 data.map((value, index) => {
-                    var hours = moment(endTime).workingDiff(moment(value.created_at), 'hours', true);
-                    if (hours < 4) {
                         item.push(value);
-                    }
                 });
             }
         }
-        else{
-            item = data;
+        else {
+            console.log("newlead-all")
+            console.log(data)
+            data.map((value, index) => {
+                    item.push(value);
+            });
         }
 
         return item;
     }
 
-    store.subscribe(() => {
-        setLeadsData(rebuildNewLeadData(store.getState().leadsReducer.data));
-    });
-
-    const handleDeleteLead = (id) => {
-        dispatch(deleteLead(id));
-    };
-
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        dispatch(getLeadData('', '', '', ''));
-        navigation.setParams({ filterStatus: ''});
+        leadList(
+            '',
+            '',
+            '',
+            ''
+        ).then((data) => {
+            setLeadsData(rebuildNewLeadData(data));
+        });
+
+        navigation.setParams({ filterStatus: '' });
         wait(3000).then(() => setRefreshing(false));
     }, [refreshing]);
 
@@ -225,6 +232,33 @@ const LeadListScreen = (props) => {
             { cancelable: true }
         );
     };
+
+    
+
+    const renderLeadItem = ({ item }) => (
+        <Swipeout
+            right={[
+                {
+                    component: (
+                        <SwipeoutButton
+                            onDeletePress={() => leadDeletePress(item.id)}
+                            onEditPress={() =>
+                                navigation.navigate('LeadEdit', { item: item })
+                            }
+                        />
+                    ),
+                },
+            ]}>
+            <LeadItem
+                item={item}
+                status="follow"
+                onViewPress={() =>
+                    navigation.navigate('LeadView', { item: item })
+                }
+            />
+        </Swipeout>
+    );
+
     if (!store.getState().leadsReducer.data) return false;
     return (
         <View
@@ -263,12 +297,16 @@ const LeadListScreen = (props) => {
                         <View style={{ flexDirection: 'row', marginTop: -10 }}>
                             <View style={{ width: '50%' }}>
                                 <DatePicker
+                                    key="ABCADKJASD"
+                                    initialDate={defaultLabel}
                                     selectedDate={defaultLabel}
                                     onChange={(value) => setDefaultLabel(value)}
                                 />
                             </View>
                             <View style={{ width: '50%' }}>
                                 <DatePicker
+                                    key="09ajdskjiue"
+                                    initialDate={defaultLabel2}
                                     selectedDate={defaultLabel2}
                                     onChange={(value) => { setDefaultLabel2(value); console.log(value) }}
                                 />
@@ -330,33 +368,12 @@ const LeadListScreen = (props) => {
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
+                    removeClippedSubviews={true}
                     keyExtractor={(item) => item.id.toString()}
                     data={leadsData}
-                    renderItem={({ item }) => {
-                        return (
-                            <Swipeout
-                                right={[
-                                    {
-                                        component: (
-                                            <SwipeoutButton
-                                                onDeletePress={() => leadDeletePress(item.id)}
-                                                onEditPress={() =>
-                                                    navigation.navigate('LeadEdit', { item: item })
-                                                }
-                                            />
-                                        ),
-                                    },
-                                ]}>
-                                <LeadItem
-                                    item={item}
-                                    status="follow"
-                                    onViewPress={() =>
-                                        navigation.navigate('LeadView', { item: item })
-                                    }
-                                />
-                            </Swipeout>
-                        );
-                    }}
+                    renderItem={renderLeadItem}
+                    initialNumToRender={25}
+                    updateCellsBatchingPeriod={50}
                 />
             </SafeAreaView>
         </View>

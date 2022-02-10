@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
     Text,
     View,
-    CheckBox,
     TouchableOpacity,
     Image,
     ActivityIndicator
@@ -14,10 +13,11 @@ import styles from './styles';
 import { useDispatch, connect } from 'react-redux';
 import { store } from '../../store/store';
 import { login } from '../../actions/authAction';
-import AsyncStorage from "@react-native-community/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from 'expo-notifications';
 import { KeyboardAvoidingView } from "react-native";
 import { Platform } from "react-native";
+import { Checkbox } from 'react-native-paper';
 const LoginScreen = ({ navigation }) => {
 
     const [email, setEmail] = useState("");
@@ -98,7 +98,8 @@ const LoginScreen = ({ navigation }) => {
                         <TextFieldWithIcon key='login_input' autoCapitalize='none' keyboardType='email-address' iconName="idcard" placeholder="Email" required={false} hidden={false} onChange={email => setEmail(email)} value={email} />
                         <TextFieldWithIcon key='login_password' autoCapitalize='none' iconName="lock" placeholder="Password" required={true} hidden={true} onChange={password => setPassword(password)} value={password} />
                         <View style={styles.rememberSection}>
-                            <CheckBox value={remember} onValueChange={setRemember} />
+                            <Checkbox.Android status={remember ? "checked" : "unchecked"} onPress={() => setRemember(!remember)} color='green' />
+                            
                             <Text>Remember Me</Text>
                             <TouchableOpacity style={{ flex: 1 }} onPress={() => navigation.navigate('ResetPassword')}>
                                 <Text style={{ textAlign: 'right' }} >Forgot Password?</Text>

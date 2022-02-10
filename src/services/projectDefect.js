@@ -2,8 +2,8 @@ import { Alert } from 'react-native';
 import api from '../api/api';
 import { store } from '../store/store';
 
-export function getProjectDefectList(project_id) {
-    return api.get(`/project-defect/${project_id}`, {
+export function getProjectDefectList(project_id,status = '',category = '',sow_id = '') {
+    return api.get(`/project-defect/${project_id}?status=${status}&category=${category}&sow_id=${sow_id}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
@@ -126,6 +126,18 @@ export function addProjectVendorList(data) {
 
 export function getProjectVendorList(project_id,sow_id) {
     return api.get(`/get-vendor-by-sow/${project_id}/${sow_id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data.data;
+        })
+        .catch(err => console.log(err));
+}
+
+export function getVendorByProject(project_id) {
+    return api.get(`/get-vendor-project/${project_id}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }

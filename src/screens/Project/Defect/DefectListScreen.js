@@ -15,6 +15,9 @@ import { store } from '../../../store/store';
 import ProjectInspectionItem from '../../../components/Project/ProjectInspectionItem';
 import ProjectDefectItem from '../../../components/Project/ProjectDefectItem';
 import { getProjectDefectList } from '../../../services/projectDefect';
+import SelectPicker from '../../../components/SelectPicker';
+import { getSowSource } from '../../../services/config';
+import DefaultButton from '../../../components/DefaultButton';
 
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
@@ -26,10 +29,27 @@ const DefectListScreen = (props) => {
     const [visible, setVisible] = useState(false);
     const [defectList, setDefectList] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+
+    // FILTER
+    const [status, setStatus] = useState("");
+    const [category, setCategory] = useState("");
+    const [sow_id, setSowId] = useState("");
+    const [sowOptions, setSowOptions] = useState([]);
+
     useEffect(() => {
         navigation.setParams({
             project_id: project.id,
             project
+        });
+
+        getSowSource().then((data) => {
+            setSowOptions([]);
+            data.data.map((value) => {
+                setSowOptions((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.id, key: value.name },
+                ]);
+            });
         });
 
         getProjectDefectList(project.id).then((data) => setDefectList(data));
@@ -47,6 +67,56 @@ const DefectListScreen = (props) => {
         wait(1000).then(() => setRefreshing(false))
     }, [refreshing]);
 
+    const toggleOverlay = () => {
+        setVisible(!visible);
+    };
+
+    const filter = () => {
+        toggleOverlay();
+        setRefreshing(true);
+        
+        getProjectDefectList(project.id,status,category,sow_id).then((data) => setDefectList(data));
+
+        wait(2000)
+            .then(() => setRefreshing(false))
+            .then(() => {
+                setStatus("");
+                setCategory('');
+                setSowId("");
+            });
+    };
+
+    const statusOptions = [
+        {
+            key:1,
+            label: "Completed",
+            value: "Inactive"
+        },
+        {
+            key:2,
+            label: "Ongoing",
+            value: "Active"
+        },
+    ];
+
+    const categoryOptions = [
+        {
+            label: "Pre-renovation",
+            value: "Pre-renovation",
+            key: 1
+        },
+        {
+            label: "Defect",
+            value: "Defect",
+            key: 2
+        },
+        {
+            label: "Handover",
+            value: "Handover",
+            key: 3
+        },
+    ];
+
     return (
         <View style={{
             flex: 1,
@@ -54,13 +124,70 @@ const DefectListScreen = (props) => {
             alignItems: 'stretch',
             padding: 20,
         }}>
+            <Overlay
+                isVisible={visible}
+                onBackdropPress={toggleOverlay}
+                overlayStyle={{ width: '80%' }}>
+                <View>
+                    <Text style={{ fontSize: 20, color: 'grey' }}>Filter</Text>
+                    <View
+                        style={{
+                            marginTop: 10,
+                        }}>
+                        <Text style={{ fontSize: 14, color: 'grey', marginBottom: -10 }}>
+                            Status
+                        </Text>
+                        <SelectPicker
+                            key="STATUS_FILTER"
+                            selectedValue={status}
+                            options={statusOptions}
+                            onSelect={(value) => setStatus(value)}
+                        />
+                    </View>
+                    <View
+                        style={{
+                            marginTop: 10,
+                        }}>
+                        <Text style={{ fontSize: 14, color: 'grey', marginBottom: -10 }}>
+                            Category
+                        </Text>
+                        <SelectPicker
+                            key="CATEGORY_FILTER"
+                            selectedValue={category}
+                            options={categoryOptions}
+                            onSelect={(value) => setCategory(value)}
+                        />
+                    </View>
+                    <View
+                        style={{
+                            marginTop: 10,
+                        }}>
+                        <Text style={{ fontSize: 14, color: 'grey', marginBottom: -10 }}>
+                            Scope of Work
+                        </Text>
+                        <SelectPicker
+                            key="SOW_FILTER"
+                            selectedValue={sow_id}
+                            options={sowOptions}
+                            onSelect={(value) => setSowId(value)}
+                        />
+                    </View>
+                    <View
+                        style={{
+                            marginTop: 10,
+                        }}>
+                        <DefaultButton textButton="FILTER" onPress={() => filter()} />
+                    </View>
+                    
+                </View>
+            </Overlay>
             <View style={{ flexDirection: 'row' }}>
                 <View style={{ width: '50%', justifyContent: 'flex-start' }}>
                     <Text style={{ color: 'grey', fontSize: 20 }}>Project Defects:</Text>
                     <Text style={{ color: 'grey', fontSize: 20 }}>{project.client_name}</Text>
                 </View>
                 <View style={{ width: '50%', justifyContent: 'flex-start' }}>
-                    <TouchableOpacity style={{ backgroundColor: 'white', width: 150, height: 40, alignSelf: 'flex-end', justifyContent: 'center' }} onPress={() => console.log("Pressed")}>
+                    <TouchableOpacity style={{ backgroundColor: 'white', width: 150, height: 40, alignSelf: 'flex-end', justifyContent: 'center' }} onPress={toggleOverlay}>
                         <Text style={{ textAlign: 'center', letterSpacing: 1 }}>FILTER</Text>
                     </TouchableOpacity>
                 </View>
@@ -71,13 +198,13 @@ const DefectListScreen = (props) => {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                    />}
+                        />}
                     keyExtractor={item => item.id.toString()}
                     data={defectList}
                     renderItem={({ item }) => {
                         return (
 
-                                <ProjectDefectItem item={item} status="follow" onViewPress={() => navigation.push('ProgressDefectView',{defect:item,project})} />
+                            <ProjectDefectItem item={item} status="follow" onViewPress={() => navigation.push('ProgressDefectView', { defect: item, project })} />
                         )
                     }}
                 />

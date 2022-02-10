@@ -21,7 +21,7 @@ import SalesListScreen from './src/screens/Sales/SalesListScreen'
 //Custome Header
 import homeOption from './src/general/Header/HomeHeader';
 import { leadsEditOption, leadsOption, leadsViewOption } from './src/general/Header/LeadsHeader';
-import { salesOption, salesViewOption, salesViewDocumentOption, salesViewSIDocumentOption, salesViewAgreementDocumentOption } from './src/general/Header/SalesHeader';
+import { salesOption, salesViewOption, salesViewDocumentOption, salesViewSIDocumentOption, salesViewAgreementDocumentOption,salesViewVODocumentOption } from './src/general/Header/SalesHeader';
 import LeadEditScreen from './src/screens/Lead/LeadEditScreen';
 import LeadRemarkScreen from './src/screens/Lead/LeadRemarkScreen';
 import LeadViewScreen from './src/screens/Lead/LeadViewScreen';
@@ -49,6 +49,7 @@ import DefectViewScreen from './src/screens/Project/Defect/DefectViewScreen';
 import SalesViewSIDocument from './src/screens/Sales/SalesViewSIDocument';
 import SalesViewAgreementDocument from './src/screens/Sales/SalesViewAgreementDocument';
 import SalesSignAgreement from './src/screens/Sales/SalesSignAgreement';
+import SalesViewVO from './src/screens/Sales/SalesViewVO';
 
 const authNavigator = createStackNavigator(
   {
@@ -131,7 +132,7 @@ const SalesStack = createStackNavigator(
   {
     Sales: {
       screen: SalesListScreen,
-      navigationOptions: salesOption
+      navigationOptions: salesOption,
     },
     SalesCreation: {
       screen: SalesCreateScreen,
@@ -159,6 +160,10 @@ const SalesStack = createStackNavigator(
     SalesViewSIDocument:{
       screen: SalesViewSIDocument,
       navigationOptions: salesViewSIDocumentOption
+    },
+    SalesViewVO:{
+      screen: SalesViewVO,
+      navigationOptions: salesViewVODocumentOption
     },
     SalesViewAgreementDocument:{
       screen: SalesViewAgreementDocument,

@@ -3,13 +3,22 @@ import api from '../api/api';
 import { store } from '../store/store';
 import moment from 'moment';
 
-export function leadList() {
-    return api.get('/leads', {
+export function leadList(status = '', start_date = '', end_date = '', salesman_id = '', need_attention = '') {
+    return api.get(`/leads?status=${status}&start_date=${start_date}&end_date=${end_date}&salesman_id=${salesman_id}&need_attention=${need_attention}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
     }).then(response => { return response.data.data.lead })
-        .catch(err => console.log(err));
+        .catch(err => console.log(err.response));
+}
+
+export function checkVenueAvailability(date,time,time_end,venue, venue_two = "") {
+    return api.get(`/check-venue-availability?date=${date}&time=${time}&time_end=${time_end}&venue=${venue}&venue_two=${venue_two}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }).then(response => { return response.data })
+        .catch(err => console.log(err.response));
 }
 
 export function leadRemark(lead_id) {
@@ -31,7 +40,7 @@ export function singleLead(lead_id) {
 }
 
 export function addLeadAppointment(data) {
-    const { lead_id, company_id, name, venue, date, time, client_name, sales_name,pax, venue_two } = data;
+    const { lead_id, company_id, name, venue, date, time, client_name, sales_name,pax, venue_two, time_end } = data;
     return api.post('/appointments',
         {
             lead_id: lead_id,
@@ -43,7 +52,8 @@ export function addLeadAppointment(data) {
             client_name,
             sales_name,
             pax,
-            venue_two
+            venue_two,
+            time_end
         },
         {
             headers: {
@@ -60,17 +70,18 @@ export function addLeadAppointment(data) {
 }
 
 export function updateLeadAppointment(data) {
-    const { appointmentId, name, venue, date, time, client_name, sales_name, pax, venue_two } = data;
+    const { appointmentId, name, venue, date, time, client_name, sales_name, pax, venue_two, time_end } = data;
     return api.put(`/appointments/${appointmentId}`,
         {
             name: name,
             date: date,
             venue: venue,
+            venue_two,
             time: time,
             client_name,
             sales_name,
             pax,
-            venue_two
+            time_end
         },
         {
             headers: {

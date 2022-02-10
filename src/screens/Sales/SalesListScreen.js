@@ -15,21 +15,20 @@ import SalesItem from '../../components/Sales/SalesItem';
 import { getSalesData } from '../../actions/salesAction';
 import { SafeAreaView } from 'react-native';
 import DatePicker from '../../components/DatePicker';
+import { getSalesList } from '../../services/sales';
 
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
 
-const SalesListScreen = (props) => {
-    const { navigation } = props;
-
+const SalesListScreen = ({navigation}) => {
     // FILTER
     var dateFilter = new Date();
     var nextDay = dateFilter.setDate(dateFilter.getDate() + 1);
     const [visible, setVisible] = useState(false);
     const [selectedValue, setSelectedValue] = useState("ready");
     const [defaultLabel, setDefaultLabel] = useState(new Date());
-    const [defaultLabel2, setDefaultLabel2] = useState(nextDay);
+    const [defaultLabel2, setDefaultLabel2] = useState(dateFilter);
     const [date, setDate] = useState(new Date());
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
@@ -43,11 +42,15 @@ const SalesListScreen = (props) => {
         setVisible(!visible);
     };
 
-
-    const dispatch = useDispatch();
-
     useEffect(() => {
-        dispatch(getSalesData());
+        setRefreshing(true);
+        getSalesList(
+            '',
+            '',
+            '',
+            navigation.getParam('needAction')
+        ).then((data) => {setSalesData(data); setRefreshing(false);});;
+        console.log(navigation)
     }, []);
 
     useEffect(() => {
@@ -57,26 +60,42 @@ const SalesListScreen = (props) => {
         });
     }, [navigation])
 
-    store.subscribe(() => {
-        setSalesData(store.getState().salesReducer.data);
-    });
-
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        dispatch(getSalesData());
+        getSalesList(
+            '',
+            '',
+            '',
+            'no-need'
+        ).then((data) => setSalesData(data));
         wait(3000).then(() => setRefreshing(false))
+        console.log(navigation)
     }, [refreshing]);
+
+    const renderListItem = ({ item }) => (
+        <Swipeout
+            right={[
+                {
+                    component: <SwipeoutButton onDeletePress={() => leadDeletePress(item.id)} onEditPress={() => navigation.navigate('SalesEdit', { item: item })} />,
+                }
+            ]}
+        >
+            <SalesItem item={item} status="follow" onViewPress={() => navigation.navigate('SalesView', { item: item })} />
+        </Swipeout>
+    );
+
 
     const filterSales = () => {
         toggleOverlay();
         setRefreshing(true);
-        dispatch(
-            getSalesData(
-                selectedValue, 
-                moment(defaultLabel).format('YYYY-MM-DD'),
-                moment(defaultLabel2).format('YYYY-MM-DD'),
-                )
-            );
+        getSalesList(
+            selectedValue,
+            moment(defaultLabel).format('YYYY-MM-DD'),
+            moment(defaultLabel2).format('YYYY-MM-DD'),
+            'no-need'
+        )
+        .then((data) => setSalesData(data));
+
         wait(3000).then(() => setRefreshing(false));
     }
 
@@ -155,7 +174,7 @@ const SalesListScreen = (props) => {
             </View>
             <SafeAreaView style={{ flex: 1, marginTop: 7, margin: -20 }}>
                 {
-                    (salesData && salesData.length > 0) ?
+                    
                         <FlatList
                             refreshControl={
                                 <RefreshControl
@@ -164,20 +183,11 @@ const SalesListScreen = (props) => {
                                 />}
                             keyExtractor={(item) => item.id.toString()}
                             data={salesData}
-                            renderItem={({ item }) => {
-                                return (
-                                    <Swipeout
-                                        right={[
-                                            {
-                                                component: <SwipeoutButton onDeletePress={() => leadDeletePress(item.id)} onEditPress={() => navigation.navigate('SalesEdit', { item: item })} />,
-                                            }
-                                        ]}
-                                    >
-                                        <SalesItem item={item} status="follow" onViewPress={() => navigation.navigate('SalesView', { item: item })} />
-                                    </Swipeout>
-                                )
-                            }}
-                        /> : <Text style={{ width: "100%", backgroundColor: 'lightgrey', textAlign: 'center' }}>No data</Text>
+                            removeClippedSubviews={true}
+                            initialNumToRender={25}
+                            updateCellsBatchingPeriod={50}
+                            renderItem={renderListItem}
+                        />
                 }
 
             </SafeAreaView>

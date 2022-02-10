@@ -4,11 +4,12 @@ import { StyleSheet, Text, View, Image, Button, CheckBox, TouchableOpacity } fro
 import SignatureScreen from 'react-native-signature-canvas';
 import { signAgreement } from '../../services/agreement';
 import { Checkbox } from 'react-native-paper';
+import { Platform } from 'react-native';
 
 const SalesSignAgreement = ({ navigation, onOK }) => {
     const [signature, setSign] = useState(null);
     const [agree, setAgree] = useState(false);
-    const { id } = navigation.state.params;
+    const { id, item } = navigation.state.params;
     const ref = useRef();
 
     const handleSignature = signature => {
@@ -36,7 +37,7 @@ const SalesSignAgreement = ({ navigation, onOK }) => {
             Alert.alert("Terms & Conditions","Please agree");
             return;
         }
-        signAgreement(id,signature).then(Alert.alert("SIGNED")).then(handleClear);
+        signAgreement(id,signature).then(Alert.alert("Agreement Signing","Agreement has been signed")).then(handleClear).then(navigation.navigate('SalesView', { item: item }));
     }
 
     const style = `
@@ -60,7 +61,7 @@ const SalesSignAgreement = ({ navigation, onOK }) => {
                         source={{ uri: signature }}
                     />
                 ) : null} */}
-                <Text style={{ color: 'white', fontSize: 16 }}>Agreement Customer's Sign</Text>
+                <Text style={{ color: 'white', fontSize: 16 }}>Agreement Customer's Signature</Text>
             </View>
             <View style={styles.container}>
                 <SignatureScreen
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         backgroundColor: "black",
-        padding: 20,
+        padding: Platform.OS == "ios" ? 2 : 20,
     },
     previewText: {
         color: "#FFF",

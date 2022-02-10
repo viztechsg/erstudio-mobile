@@ -36,7 +36,7 @@ const DatePicker = props => {
                     borderColor: 'gray',
                     borderRadius: 4,
                 }}>
-                    <Text>{(props?.initialDate == null ) ? "Please select date" : moment(selectedDate).format('DD-MM-YYYY')}</Text>
+                    <Text>{(props?.initialDate == null ) ? "Please select date" : moment(selectedDate,'YYYY-MM-DD').format('DD-MM-YYYY')}</Text>
                 </View>
             </TouchableOpacity>
             {showDatePicker && (

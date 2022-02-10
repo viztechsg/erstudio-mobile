@@ -135,6 +135,7 @@ const SalesCreateScreen = ({ props, navigation }) => {
             }
         })
             .then((data) => {
+                console.log(data);
                 setSourceLead([]);
                 rebuildSourceLeadData(data.data.data.lead);
             })

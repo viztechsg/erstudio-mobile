@@ -17,7 +17,7 @@ const AppointmentItem = props => {
             <View style={styles.wrapper}>
                 <View style={styles.row}>
                     <View style={styles.column_2}>
-                        <Text style={styles.textDate}>{moment(props.item.date).format('ddd, DD MM YYYY')}</Text>
+                        <Text style={styles.textDate}>{moment(props.item.date,'DD-MM-YYYY').format('DD MMM YYYY')}</Text>
                     </View>
                 </View>
                 <View style={[styles.row, { flexDirection: "row" }]}>
@@ -27,7 +27,7 @@ const AppointmentItem = props => {
                         <Text>{props.item.client_name}</Text>
                     </View>
                     <View style={{ width: '15%', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                        <Text style={styles.text}>{props.item.time}</Text>
+                        <Text style={styles.text}>{props.item.time} - {props.item.time_end || "Done"}</Text>
                     </View>
                 </View>
             </View>

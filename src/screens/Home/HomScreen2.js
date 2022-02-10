@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, StyleSheet, View, TouchableOpacity, Image, ScrollView, RefreshControl, CheckBox } from "react-native";
+import { Text, StyleSheet, View, TouchableOpacity, Image, ScrollView, RefreshControl, CheckBox, Alert } from "react-native";
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/FontAwesome'
 import Icon3 from 'react-native-vector-icons/MaterialCommunityIcons'
@@ -15,15 +15,15 @@ import SelectPicker from '../../components/SelectPicker';
 import DefaultButton from '../../components/DefaultButton';
 import DatePicker from "../../components/DatePicker";
 import { appointmentMinutesOption, appointmentSecondVenue, appointmentTimeOptions } from "../../constants/Appointment";
-import { updateLeadAppointment } from "../../services/lead";
+import { checkVenueAvailability, updateLeadAppointment } from "../../services/lead";
 import moment from 'moment-business-time';
-import { getVenueSource } from "../../services/config";
+import { getNeedAttention, getVenueSource } from "../../services/config";
 import api from "../../api/api";
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
 
-const HomeScreen2 = (props) => {
+const HomeScreen2 = ({ navigation }) => {
     moment.locale('en', {
         workinghours: {
             0: null,
@@ -43,9 +43,29 @@ const HomeScreen2 = (props) => {
     const [updateModalData, setUpdateModalData] = useState([]);
     const [hour, setHour] = useState("");
     const [minute, setMinute] = useState("");
+    const [hourEnd, setHourEnd] = useState("");
+    const [minuteEnd, setMinuteEnd] = useState("");
     const [appointmentDataLog, setAppointmentDataLog] = useState([]);
     const [apptVenueOption, setApptVenueOption] = useState([]);
+    const [appointmentChildVenue, setAppointmentChildVenue] = useState([]);
     const [needAttentionTotal, setNeedAttentionTotal] = useState(0);
+    const [pendingDoc, setPendingDoc] = useState(0);
+
+
+    const [checkingRule, setCheckingRule] = useState([]);
+    const [hourCompare, setHourCompare] = useState("");
+    const [hourCompareEnd, setHourCompareEnd] = useState("");
+    const [minuteCompare, setMinuteCompare] = useState("");
+    const [minuteCompareEnd, setMinuteCompareEnd] = useState("");
+    const [venueCompare, setVenueCompare] = useState("");
+    const [venueTwoCompare, setVenueTwoCompare] = useState("");
+    const [dateCompare, setDateCompare] = useState("");
+
+    useEffect(() => {
+        navigation.setParams({
+            needAttention: pendingDoc
+        });
+    }, [pendingDoc]);
 
 
     const getAllLead = () => {
@@ -78,13 +98,14 @@ const HomeScreen2 = (props) => {
 
     useEffect(() => {
         dashboardData().then((data) => data).then(response => { setDashboard(response) }).catch((e) => console.log(e.response))
+        getNeedAttention().then((data) => setPendingDoc(data));
         getAllLead();
         getVenueSource().then((data) => {
             setApptVenueOption([]);
             data.data.map((value) => {
                 setApptVenueOption((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name }
+                    { label: value.name, value: value.name, key: value.name, children: value.children }
                 ]);
             });
         });
@@ -98,8 +119,9 @@ const HomeScreen2 = (props) => {
     }, []);
 
     useEffect(() => {
-        props.navigation.addListener('willFocus', () => {
+        navigation.addListener('willFocus', () => {
             dashboardData().then((data) => data).then(response => setDashboard(response));
+            getNeedAttention().then((data) => setPendingDoc(data)).catch((E) => console.log(E));
             getAllLead();
             getVenueSource().then((data) => {
                 setApptVenueOption([]);
@@ -112,15 +134,59 @@ const HomeScreen2 = (props) => {
             });
         });
 
-    }, [props.navigation])
+    }, [navigation])
+
+    const changeDateStart = useCallback(
+        (data) => {
+            setHour(data);
+            var nextHour = parseInt(data) + 1;
+            var newHourEnd = nextHour.toString();
+
+            if(nextHour == 9)
+            {
+                newHourEnd = "0"+nextHour.toString();
+            }
+
+            setHourEnd(newHourEnd);
+        },
+        [hour],
+    )
+
+    // const changeDateStart = (data) => {
+        
+    // }
 
     const updateAppointment = async () => {
+        if (hour + ":" + minute != hourCompare + ":" + minuteCompare || hourEnd + ":" + minuteEnd != hourCompareEnd + ":" + minuteCompareEnd || venueTwoCompare != updateModalData?.venue_two || venueCompare != updateModalData?.venue || dateCompare != moment(updateModalData?.date, 'DD-MM-YYYY').format('YYYY-MM-DD')) {
+            var venueAvailability = await checkVenueAvailability(
+                moment(updateModalData?.date, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+                hour + ":" + minute,
+                hourEnd + ":" + minuteEnd,
+                updateModalData?.venue,
+                updateModalData?.venue_two
+            );
+
+            console.log(venueAvailability);
+
+            if (venueAvailability.is_available == false) {
+
+                var msg = "Venue already booked for this range time \n\n";
+                venueAvailability.data.map((item, index) => {
+                    msg += `Booking Details: \nVenue: ${item.venue_two ? item.venue + '|' + item.venue_two : item.venue}\nDate & Time: ${item.date}, ${item.time} - ${item.time_end}\n\n`
+                });
+
+                Alert.alert("Appointment", msg);
+                return;
+            }
+        }
+
         let appointmentItem = {
             appointmentId: updateModalData?.id,
             name: 'Appointment',
-            date: moment(updateModalData?.date).format('YYYY-MM-DD'),
+            date: moment(updateModalData?.date, 'DD-MM-YYYY').format('YYYY-MM-DD'),
             venue: updateModalData?.venue,
             time: hour + ":" + minute,
+            time_end: hourEnd + ":" + minuteEnd,
             client_name: updateModalData?.client_name,
             sales_name: updateModalData?.sales_name,
             pax: updateModalData?.pax,
@@ -183,14 +249,14 @@ const HomeScreen2 = (props) => {
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
 
                                 <View style={{ width: '49%' }} >
-                                    <TouchableOpacity style={{ width: '100%' }} key='NEW_LEAD_DIRECT' onPress={() => props.navigation.navigate('List', { filterStatus: 'newlead', needAttention: 'newlead-noneed' })}>
+                                    <TouchableOpacity style={{ width: '100%' }} key='NEW_LEAD_DIRECT' onPress={() => navigation.navigate('List', { filterStatus: 'newlead', needAttention: 'newlead-noneed' })}>
                                         <Text adjustsFontSizeToFit style={styles.innerWhiteText}>{dashboard?.new_leads ? dashboard?.new_leads : 0}</Text>
                                         <Text adjustsFontSizeToFit style={{ fontSize: 15, color: 'white', }}>Total</Text>
                                     </TouchableOpacity>
                                 </View>
 
                                 <View style={{ flexShrink: 1, justifyContent: 'flex-end', width: '49%' }}>
-                                    <TouchableOpacity style={{ width: '100%' }} key='NEW_LEAD_DIRECT_NEED_ATTENTION' onPress={() => props.navigation.navigate('List', { filterStatus: 'newlead', needAttention: 'newlead-need' })}>
+                                    <TouchableOpacity style={{ width: '100%' }} key='NEW_LEAD_DIRECT_NEED_ATTENTION' onPress={() => navigation.navigate('List', { filterStatus: 'newlead', needAttention: 'newlead-need' })}>
                                         <Text adjustsFontSizeToFit style={{ fontSize: 45, color: '#F86D6D' }}>{needAttentionTotal}</Text>
                                         <Text adjustsFontSizeToFit style={{ fontSize: 14, color: '#F86D6D' }}>Need Attention</Text>
                                     </TouchableOpacity>
@@ -200,7 +266,7 @@ const HomeScreen2 = (props) => {
                         </View>
 
                         <View style={styles.card}>
-                            <TouchableOpacity key='FOLLOW_UP_DIRECT' onPress={() => props.navigation.navigate('List', { filterStatus: 'followup', needAttention: '' })}>
+                            <TouchableOpacity key='FOLLOW_UP_DIRECT' onPress={() => navigation.navigate('List', { filterStatus: 'followup', needAttention: '' })}>
                                 <View style={styles.cardContent}>
                                     <Text adjustsFontSizeToFit style={{ fontSize: 16, color: '#F49C37', fontWeight: 'bold' }}>To Follow Up</Text>
                                 </View>
@@ -214,7 +280,7 @@ const HomeScreen2 = (props) => {
                     </View>
                     <View style={[styles.wrapper2, { backgroundColor: 'transparent' }]}>
                         <View style={styles.card}>
-                            <TouchableOpacity key='RETURN_DIRECT' onPress={() => props.navigation.navigate('List', { filterStatus: '', needAttention: '' })}>
+                            <TouchableOpacity key='RETURN_DIRECT' onPress={() => navigation.navigate('List', { filterStatus: '', needAttention: '' })}>
                                 <View style={styles.cardContent}>
                                     <Text adjustsFontSizeToFit style={{ fontSize: 16, color: '#B2B2B2', fontWeight: 'bold' }}>Yearly Leads</Text>
                                 </View>
@@ -225,7 +291,7 @@ const HomeScreen2 = (props) => {
                             </TouchableOpacity>
                         </View>
                         <View style={styles.card}>
-                            <TouchableOpacity key='SUCCESS_DIRECT' onPress={() => props.navigation.navigate('List', { filterStatus: 'successful', needAttention: '' })}>
+                            <TouchableOpacity key='SUCCESS_DIRECT' onPress={() => navigation.navigate('List', { filterStatus: 'successful', needAttention: '' })}>
                                 <View style={styles.cardContent}>
                                     <Text adjustsFontSizeToFit style={{ fontSize: 16, color: '#1DBE16', fontWeight: 'bold' }}>Success Leads</Text>
                                 </View>
@@ -258,11 +324,15 @@ const HomeScreen2 = (props) => {
                             <DatePicker
                                 required={true}
                                 label="Date"
-                                selectedDate={new Date(updateModalData?.date)}
+                                initialDate={updateModalData?.date ? new Date(moment(updateModalData.date, 'DD-MM-YYYY').format()) : new Date()}
+                                selectedDate={new Date(moment(updateModalData.date, 'DD-MM-YYYY').format())}
                                 onChange={(data) =>
                                     setUpdateModalData((prevState) => ({ ...prevState, date: data }))
                                 }
                             />
+                            <View>
+                                <Text>Start Time</Text>
+                            </View>
                             <View style={{ flexDirection: 'row', marginTop: -10 }}>
                                 <View style={{ width: '50%' }}>
                                     <SelectPicker
@@ -270,7 +340,7 @@ const HomeScreen2 = (props) => {
                                         required={true}
                                         selectedValue={hour}
                                         options={appointmentTimeOptions}
-                                        onSelect={(data) => setHour(data)}
+                                        onSelect={(data) => changeDateStart(data)}
                                     />
                                 </View>
                                 <View style={{ width: '50%' }}>
@@ -283,13 +353,46 @@ const HomeScreen2 = (props) => {
                                     />
                                 </View>
                             </View>
+
+                            <View>
+                                <Text>End Time</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', marginTop: -10 }}>
+                                <View style={{ width: '50%' }}>
+                                    <SelectPicker
+                                        label="Hour"
+                                        required={true}
+                                        selectedValue={hourEnd}
+                                        options={appointmentTimeOptions}
+                                        onSelect={(data) => { setHourEnd(data) }}
+                                    />
+                                </View>
+                                <View style={{ width: '50%' }}>
+                                    <SelectPicker
+                                        label="Minutes"
+                                        required={true}
+                                        selectedValue={minuteEnd}
+                                        options={appointmentMinutesOption}
+                                        onSelect={(data) => setMinuteEnd(data)}
+                                    />
+                                </View>
+                            </View>
                             <SelectPicker
                                 label="Venue"
                                 required={true}
                                 selectedValue={updateModalData?.venue}
                                 options={apptVenueOption}
-                                onSelect={(data) => {
-                                    setUpdateModalData((prevState) => ({ ...prevState, venue: data }))
+                                onSelect={(data, index) => {
+                                    setUpdateModalData((prevState) => ({ ...prevState, venue: data }));
+                                    if (apptVenueOption[index - 1].children.length > 0) {
+                                        setAppointmentChildVenue([]);
+                                        apptVenueOption[index - 1].children.map((value) => {
+                                            setAppointmentChildVenue((oldValue) => [
+                                                ...oldValue,
+                                                { label: value.name, value: value.name, key: value.name }
+                                            ]);
+                                        });
+                                    }
                                     if (data != "Studio" || updateModalData?.venue != "Studio") {
                                         setUpdateModalData((prevState) => ({ ...prevState, venue_two: '' }))
                                     }
@@ -301,7 +404,7 @@ const HomeScreen2 = (props) => {
                                     <SelectPicker
                                         required={false}
                                         selectedValue={updateModalData?.venue_two}
-                                        options={appointmentSecondVenue}
+                                        options={appointmentChildVenue}
                                         onSelect={(data) => setUpdateModalData((prevState) => ({ ...prevState, venue_two: data }))}
                                     />
                                 )
@@ -369,6 +472,17 @@ const HomeScreen2 = (props) => {
                                                 setUpdateModalData(item[1]);
                                                 setHour(item[1].time.split(":")[0]);
                                                 setMinute(item[1].time.split(":")[1]);
+                                                setHourEnd(item[1].time_end?.split(":")[0]);
+                                                setMinuteEnd(item[1].time_end?.split(":")[1]);
+
+                                                // COMPARING DATA
+                                                setHourCompare(item[1].time.split(":")[0]);
+                                                setMinuteCompare(item[1].time.split(":")[1]);
+                                                setHourCompareEnd(item[1].time_end?.split(":")[0]);
+                                                setMinuteCompareEnd(item[1].time_end?.split(":")[1]);
+                                                setVenueCompare(item[1].venue);
+                                                setVenueTwoCompare(item[1].venue_two);
+                                                setDateCompare(moment(item[1].date, 'DD-MM-YYYY').format('YYYY-MM-DD'));
                                             }
                                             }
                                             item={item[1]}

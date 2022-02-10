@@ -7,7 +7,7 @@ import {
 }
     from "react-native";
 
-const TextField = ({ value, onChange, ...props }) => {
+const TextField = ({ value, onChange, onEndEditing, ...props }) => {
     return (
         <View style={{ marginTop: 20 }}>
             <View style={{ flexDirection: 'row', marginBottom: 5 }}>
@@ -19,7 +19,7 @@ const TextField = ({ value, onChange, ...props }) => {
                     <Text style={{ color: 'red' }}>*</Text>
                 }
             </View>
-            <TextInput value={value} autoCapitalize={props.autoCapitalize ? props.autoCapitalize : 'words'} returnKeyType={'done'} multiline={props.multiline ? props.multiline : false} keyboardType={props.keyboardType ? props.keyboardType : 'default'} onChangeText={onChange} placeholder={props.placeholder} style={{
+            <TextInput value={value} autoCapitalize={props.autoCapitalize ? props.autoCapitalize : 'words'} returnKeyType={'done'} multiline={props.multiline ? props.multiline : false} keyboardType={props.keyboardType ? props.keyboardType : 'default'} onChangeText={onChange} onEndEditing={onEndEditing} placeholder={props.placeholder} style={{
                 backgroundColor: (props.editable == false) ? '#B9B9B9' : 'white', height: 40, padding: 5, width: props.width ? props.width : '100%', elevation: 3, borderWidth: 1,
                 borderColor: 'gray',
                 borderRadius: 4,

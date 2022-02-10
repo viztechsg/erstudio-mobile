@@ -7,13 +7,22 @@ import { getAgreementUrl } from '../../services/agreement';
 // import {salesViewDocumentOption} from '../../general/Header/SalesHeader';
 // import Pdf from 'react-native-pdf';
 import LoadingState from '../../components/LoadingState';
-const wait = (timeout) => {
-    return new Promise(resolve => setTimeout(resolve, timeout));
-}
+import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
+import { Button } from 'native-base';
+import RenderHTML from 'react-native-render-html';
+import { getCompanyTerms } from '../../services/config';
+import DefaultButton from '../../components/DefaultButton';
+import { Badge, Overlay } from 'react-native-elements';
+import { useWindowDimensions } from 'react-native';
+
 const SalesViewAgreementDocument = ({ navigation }) => {
     const { item, type, uri, project_data } = navigation.state.params;
     const [fixedURI, setFixedURI] = useState(uri);
     const [refreshing, setRefreshing] = useState(false);
+    const [showTnc, setShowTnc] = useState(false);
+    const [htmlContent, setHtmlContent] = useState("");
+    const { width } = useWindowDimensions();
     useEffect(() => {
         navigation.setParams({
             item: item,
@@ -22,22 +31,44 @@ const SalesViewAgreementDocument = ({ navigation }) => {
         });
     }, [item.id])
 
-    useEffect(() => {
-            setRefreshing(true)
-            getAgreementUrl(item.id).then(data => setFixedURI(data));
-            wait(2000).then(()=>setRefreshing(false));
-    },[item.id]);
 
-    const reloadDoc = () => {
+    useEffect(() => {
         setRefreshing(true);
-        getAgreementUrl(item.id).then(data => setFixedURI(data));
-        wait(3000).then(() => setRefreshing(false))
+        getAgreementUrl(item.id).then(data => { setRefreshing(false); setFixedURI(data); _handlePressButtonAsync(data) });
+        getCompanyTerms().then((htmlContent) => {
+            var content = "";
+            htmlContent.data.map((item,index) => {
+                content += item.content;
+            });
+
+            setHtmlContent(content);
+        });
+    }, [item.id]);
+
+    const _handlePressButtonAsync = async (data) => {
+        await WebBrowser.openBrowserAsync(data);
     };
+
+    const toggleOverlay = () => {
+        setShowTnc(!showTnc);
+    }
 
     return (
         <View style={{ flex: 1 }}>
-            <LoadingState isUploading={refreshing} content="Loading document.." />
-            <View style={{ padding: 20, backgroundColor: '#202020', flexDirection: 'row' }}>
+            <Overlay
+                isVisible={showTnc}
+                onBackdropPress={toggleOverlay}
+                overlayStyle={{ width: '80%', height: 400 }}>
+                    <ScrollView>
+                        <RenderHTML 
+                            source={{html: htmlContent}}
+                            contentWidth={width}
+                        />
+                        <DefaultButton textButton="SIGN" onPress={() => {  navigation.navigate('SalesSignAgreement', {  id: item.id, item: project_data }) } } />
+                    </ScrollView>
+            </Overlay>
+            <LoadingState isUploading={refreshing} content="Preparing document.." />
+            <View style={{ padding: 20, backgroundColor: '#202020', flexDirection: 'row', height: 120 }}>
                 <View style={{ width: '80%' }}>
                     <Text style={{ color: 'white', fontSize: 16 }}>{type}</Text>
                     {
@@ -65,24 +96,28 @@ const SalesViewAgreementDocument = ({ navigation }) => {
                 </View>
                 {
                     item.status != "declined" && (
-                        <View style={{ width: '18%', alignItems: 'flex-end' }}>
-                            <TouchableOpacity onPress={() => navigation.navigate('SalesSignAgreement', { id: item.id })}>
-                                <Icon name='infocirlceo' size={20} color='white' />
-                            </TouchableOpacity>
+                        <View style={{ width: 60, height: 50 }}>
+                            {
+                                Platform.OS == "ios" && <Button style={{ backgroundColor: "transparent" }} onPress={toggleOverlay} >
+                                    <Icon name='form' size={20} color='white' />
+                                </Button>
+                            }
+                            {
+                                Platform.OS == "android" && <TouchableOpacity onPress={toggleOverlay}>
+                                    <Icon name='form' size={20} color='white' />
+                                </TouchableOpacity>
+                            }
+
                         </View>
                     )
                 }
             </View>
 
-            <View style={{height:30, padding:5}}>
-                <TouchableOpacity onPress={reloadDoc}>
-                    <Text style={{textAlign:'center'}}>Reload document</Text>
+            <View style={{ height: '100%', justifyContent: 'center', alignItems: 'center', marginTop: -80 }}>
+                <TouchableOpacity onPress={() => _handlePressButtonAsync(fixedURI)} style={{ borderRadius: 5, borderColor: 'black', borderWidth: 1, padding: 40, backgroundColor: '#f3f3f3' }}>
+                    <Text style={{ textAlign: 'center' }}>View Document</Text>
                 </TouchableOpacity>
             </View>
-
-            {
-                (fixedURI != "need-fetch") && (<WebView style={{ flex: 1 }} source={{ uri: `http://docs.google.com/viewer?url=${fixedURI}` }} />)
-            }
         </View>
 
 

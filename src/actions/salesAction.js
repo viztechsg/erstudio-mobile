@@ -12,7 +12,10 @@ export function getSalesData(status = '', start_date = '', end_date = '') {
             }
         })
             .then((data) => {
-                dispatch(setDataState(data.data.data.items));
+                
+                dispatch(
+                    setDataState(data.data.data.items)
+                );
             })
             .catch((error) => {
                 console.log(error.response);

@@ -2,7 +2,7 @@ import { Alert } from 'react-native'; // to show alerts in app
 import api from '../api/api';
 import { store } from '../store/store';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from "@react-native-community/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 export function login(params) {
     const { email, password, navigation, remember, push_token } = params;
 
@@ -15,6 +15,7 @@ export function login(params) {
             push_token
         })
             .then((data) => {
+                // console.log(data.data.data.user.default_company)
                 dispatch(setLoginState(data.data));
                 if(remember)
                 {
@@ -32,7 +33,6 @@ export function login(params) {
                     payload: error
                 });
             })
-        console.log(store.getState().loginReducer);
     }
 }
 

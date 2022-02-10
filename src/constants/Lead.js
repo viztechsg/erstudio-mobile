@@ -41,11 +41,6 @@ export const leadRefSource = [
 
 export const salutations = [
     {
-        label: "NA.",
-        value: "NA.",
-        key: "na"
-    },
-    {
         label: "Mr.",
         value: "Mr.",
         key: "mr."
