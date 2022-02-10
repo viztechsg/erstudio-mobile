@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, Button, StyleSheet, CheckBox, SafeAreaView, TouchableOpacity, Picker } from 'react-native';
+import { View, Text, TextInput, ScrollView, Button, StyleSheet, CheckBox, SafeAreaView, TouchableOpacity, Picker, FlatList } from 'react-native';
 import TextField from '../../components/TextField';
 import SelectPicker from '../../components/SelectPicker';
 import LongText from '../../components/LongText';
@@ -19,7 +19,9 @@ import WorkSchedule from '../../components/Sales/WorkSchedule';
 import SupplierInvoice from '../../components/Sales/SupplierInvoice';
 import { DOC_PREFIX_URL } from '../../constants/URL';
 import Agreement from '../../components/Sales/Agreement';
-
+import VariationOrder from '../../components/Sales/VariationOrder';
+import GeneralDocument from '../../components/Sales/GeneralDocument';
+import * as WebBrowser from 'expo-web-browser';
 const SalesViewScreen = ({ navigation }) => {
     const { item } = navigation.state.params;
 
@@ -33,6 +35,11 @@ const SalesViewScreen = ({ navigation }) => {
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
     const [activeSections, setActiveSections] = useState([]);
+
+    const viewGeneralDoc = async (url) => {
+        await WebBrowser.openBrowserAsync(url);
+    }
+
     const SECTIONS = [
         {
             title: 'Quotation/Agreement',
@@ -41,8 +48,7 @@ const SalesViewScreen = ({ navigation }) => {
                     {
                         projectData &&
                         projectData?.lead?.quotations.map((item, index) => {
-                            if(item.status !="draft")
-                            {
+                            if (item.status != "draft") {
                                 return (
                                     <View>
                                         <QuoAgree
@@ -54,15 +60,32 @@ const SalesViewScreen = ({ navigation }) => {
                                         />
                                         {
                                             item?.agreement.map((agr, i) => {
-                                                return <Agreement
-                                                    item={agr}
-                                                    key={++i}
-                                                    onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
-                                                        { item: agr, type: 'Agreement', uri: "need-fetch", project_data: projectData }
-                                                    )}
-                                                />
+                                                if (agr.status != "draft") {
+                                                    return <Agreement
+                                                        item={agr}
+                                                        key={++i}
+                                                        onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
+                                                            { item: agr, type: 'Agreement', uri: "need-fetch", project_data: projectData }
+                                                        )}
+                                                    />
+                                                }
                                             })
                                         }
+                                    </View>
+                                )
+                            }
+                        })
+                    }
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Quotation" || item.category == "Agreement") {
+                                return (
+                                    <View>
+                                        <GeneralDocument
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                        />
                                     </View>
                                 )
                             }
@@ -75,7 +98,37 @@ const SalesViewScreen = ({ navigation }) => {
             title: 'Variation Order',
             content: (
                 <View>
-                    <Text>No data</Text>
+                    {
+                        projectData &&
+                        projectData?.lead?.variation_orders?.map((item, index) => {
+                            return (
+                                <View>
+                                    <VariationOrder
+                                        item={item}
+                                        key={++index}
+                                        onViewPress={() => navigation.navigate('SalesViewVO',
+                                            { item: item, type: 'VO', uri: "need-fetch", project_data: projectData }
+                                        )}
+                                    />
+                                </View>
+                            )
+                        })
+                    }
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Variation Order") {
+                                return (
+                                    <View>
+                                        <GeneralDocument
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                        />
+                                    </View>
+                                )
+                            }
+                        })
+                    }
                 </View>
             ),
         },
@@ -83,7 +136,21 @@ const SalesViewScreen = ({ navigation }) => {
             title: 'Completion Certificate',
             content: (
                 <View>
-                    <Text>No data</Text>
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Completion Certificate") {
+                                return (
+                                    <View>
+                                        <GeneralDocument
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                        />
+                                    </View>
+                                )
+                            }
+                        })
+                    }
                 </View>
             ),
         },
@@ -91,7 +158,17 @@ const SalesViewScreen = ({ navigation }) => {
             title: 'Handover Checklist',
             content: (
                 <View>
-                    <Text>No data</Text>
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Handover Checklist") {
+                                return <GeneralDocument
+                                    item={item}
+                                    key={++index}
+                                    onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                />
+                            }
+                        })
+                    }
                 </View>
             ),
         },
@@ -99,7 +176,17 @@ const SalesViewScreen = ({ navigation }) => {
             title: 'Customer Invoice',
             content: (
                 <View>
-                    <Text>No data</Text>
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Customer Invoice") {
+                                return <GeneralDocument
+                                    item={item}
+                                    key={++index}
+                                    onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                />
+                            }
+                        })
+                    }
                 </View>
             ),
         },
@@ -107,7 +194,17 @@ const SalesViewScreen = ({ navigation }) => {
             title: 'Supplier PO',
             content: (
                 <View>
-                    <Text>No data</Text>
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Supplier PO") {
+                                return <GeneralDocument
+                                    item={item}
+                                    key={++index}
+                                    onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                />
+                            }
+                        })
+                    }
                 </View>
             ),
         },
@@ -121,9 +218,25 @@ const SalesViewScreen = ({ navigation }) => {
                                 item={item}
                                 key={++index}
                                 onViewPress={() => navigation.navigate('SalesViewSIDocument',
-                                    { item: item, type: `Supplier Invoice : ${item.supplier.name}`, uri: item.attachment_path, project_data: projectData }
+                                    { item: item, type: `Supplier Invoice : ${item.supplier?.vendor?.name}`, uri: item.attachment_path, project_data: projectData }
                                 )}
                             />
+                        })
+                    }
+
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Supplier Invoice") {
+                                return (
+                                    <View>
+                                        <GeneralDocument
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                        />
+                                    </View>
+                                )
+                            }
                         })
                     }
                 </View>
@@ -147,6 +260,7 @@ const SalesViewScreen = ({ navigation }) => {
 
     const initData = () => {
         getSingleProject(item.id).then((data) => {
+            console.log(data.documents);
             setProjectData(data)
             setRemarks([]);
             rebuildRemarkObject(data.remarks);
@@ -192,11 +306,15 @@ const SalesViewScreen = ({ navigation }) => {
                 ...oldValue,
                 {
                     time: moment(value.created_at).format('DD/MM/YYYY'),
-                    title: value.title,
+                    title: value.remark,
                 },
             ]);
         });
     };
+
+    const renderWS = ({ item, index }) => (
+        <WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />
+    )
 
 
     return (
@@ -289,11 +407,14 @@ const SalesViewScreen = ({ navigation }) => {
                             )
                         }
                         <View style={{ flexDirection: 'column' }}>
-                            {
-                                projectData.work_schedules && projectData.work_schedules.map((item, index) => {
-                                    return (<WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />)
-                                })
-                            }
+                            <FlatList
+                                removeClippedSubviews={true}
+                                keyExtractor={(item) => item.id.toString()}
+                                data={projectData?.work_schedules}
+                                renderItem={renderWS}
+                                initialNumToRender={25}
+                                updateCellsBatchingPeriod={50}
+                            />
                         </View>
                     </View>
 
@@ -332,6 +453,11 @@ const SalesViewScreen = ({ navigation }) => {
                                     data={remarks}
                                     circleSize={10}
                                     circleColor="grey"
+                                    options={{
+                                        removeClippedSubviews: true,
+                                        initialNumToRender: 5,
+                                        updateCellsBatchingPeriod: 10
+                                    }}
                                     lineColor="grey"
                                     timeContainerStyle={{ minWidth: 93 }}
                                     listViewContainerStyle={{ paddingTop: 10 }}

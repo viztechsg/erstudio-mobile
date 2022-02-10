@@ -9,14 +9,14 @@ import {
     from "react-native";
 import { Card, Badge } from 'react-native-elements';
 import moment from 'moment';
-const SupplierInvoice = props => {
+const VariationOrder = props => {
 
     return (
         
         <TouchableOpacity onPress={() => props.onViewPress() }>
             <View style={styles.wrapper}>
                 <View style={styles.col_1}>
-                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.supplier_invoice_no}</Text>
+                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.running_no}</Text>
                 </View>
                 <View style={styles.col_2}>
                     <Text style={{fontSize:10, justifyContent:'flex-end'}}>{moment(props.item.created_at).format("YYYY/MM/DD")}</Text>
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
         padding: 10,
         flexDirection: 'row',
         margin: 1,
-        alignSelf:'stretch',
+        alignSelf:'stretch'
     },
     col_1: {
         alignItems: 'flex-start',
@@ -45,4 +45,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default memo(SupplierInvoice);
+export default memo(VariationOrder);

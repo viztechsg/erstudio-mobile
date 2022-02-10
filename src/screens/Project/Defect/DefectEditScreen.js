@@ -25,7 +25,7 @@ import {
     getSowSource,
     getVendorSource,
 } from '../../../services/config';
-import { addPDImage, addPDRemark, addProjectDefect, deletePDImage, getProjectDefectList, getProjectVendorList, updateProjectDefect } from '../../../services/projectDefect';
+import { addPDImage, addPDRemark, addProjectDefect, deletePDImage, getProjectDefectList, getProjectVendorList, getVendorByProject, updateProjectDefect } from '../../../services/projectDefect';
 import { Overlay } from 'react-native-elements';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -33,6 +33,11 @@ import { Image } from 'react-native';
 import moment from 'moment';
 import { getSingleProjectDefect } from '../../../services/projectDefect';
 import DatePicker from '../../../components/DatePicker';
+import { useCallback } from 'react';
+
+const wait = (timeout) => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+}
 
 const DefectEditScreen = ({ props, navigation }) => {
     const { defect_id, defect, project } = navigation.state.params;
@@ -123,7 +128,6 @@ const DefectEditScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-
         getProjectVendorList(defect.project_id, defect.scope_of_work_id).then((data) => {
             setVendorOptions([]);
             data.map((value) => {
@@ -137,19 +141,20 @@ const DefectEditScreen = ({ props, navigation }) => {
             });
         });
 
-        getVendorSource().then((data) => {
+        getVendorByProject(defect.project_id).then((data) => {
             setVendorModalOptions([]);
-            data.data.map((value) => {
+            data.map((value) => {
                 setVendorModalOptions((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name },
+                    { label: value.vendor ? value.vendor.name : value.vendor_name, value: value.vendor ? value.vendor.name : value.vendor_name, key: value.vendor ? value.vendor.name : value.vendor_name },
                 ]);
             });
         });
+
     }, [defect_id]);
 
-    const pickImage = async (tp = "") => {
-        var _type = tp || type;
+    const pickImage = async (tp) => {
+        var _type = tp ? tp : type;
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -201,8 +206,8 @@ const DefectEditScreen = ({ props, navigation }) => {
         }
     };
 
-    const captureImage = async (tp = "") => {
-        var _type = tp || type;
+    const captureImage = async (tp) => {
+        var _type = tp ? tp : type;
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -280,6 +285,18 @@ const DefectEditScreen = ({ props, navigation }) => {
             vendors: modalVendors,
         };
 
+        if(modalRemark == "")
+        {
+            Alert.alert("Invalid Input","Please type the remark");
+            return;
+        }
+
+        if(modalVendors.length < 1)
+        {
+            Alert.alert("Invalid Input","Please select at least 1 vendor");
+            return;
+        }
+
         addPDRemark(payload)
             .then(() => {
                 setRemarkModal("");
@@ -299,11 +316,11 @@ const DefectEditScreen = ({ props, navigation }) => {
         setRemarkModal('');
     };
 
-    const onSubmitCreation = () => {
+    const onSubmitCreation = (completeDate = "") => {
         let payload = {
             category: defectData.category || defect.category,
             status: defectData.status || defect.status,
-            complete_date: defectData.complete_date || defect.complete_date,
+            complete_date: completeDate ? completeDate : defectData.complete_date ? defectData.complete_date : defect.complete_date,
             area_id: defectData.area_id || defect.area_id,
             scope_of_work_id: defectData.scope_of_work_id || defect.scope_of_work_id,
             vendor_id: defectData.vendor_id || defect.vendor_id
@@ -311,8 +328,21 @@ const DefectEditScreen = ({ props, navigation }) => {
 
         updateProjectDefect(payload, defect_id).then(
             Alert.alert('Success', 'Defect updated')
-        );
+        )
+        .then(() => wait(1500).then(() => navigation.navigate('ProgressDefectList', { project })));
     };
+
+    const checkModalVendorExist = (name) => {
+        const found = modalVendors.some(el => el === name);
+
+        if(found) {
+            Alert.alert("Invalid Input","You have added this vendor");
+            return true;
+        }
+        return false;
+    }
+
+
     return (
         <View
             style={{
@@ -347,8 +377,8 @@ const DefectEditScreen = ({ props, navigation }) => {
             >
                 <SafeAreaView>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Select Image</Text>
-                    <DefaultButton textButton="Browse" onPress={pickImage} />
-                    <DefaultButton textButton="Capture" onPress={captureImage} />
+                    <DefaultButton textButton="Browse" onPress={() => pickImage("")} />
+                    <DefaultButton textButton="Capture" onPress={() => captureImage("")} />
                 </SafeAreaView>
             </Overlay>
             {/* TOGGLE REMARK */}
@@ -370,7 +400,12 @@ const DefectEditScreen = ({ props, navigation }) => {
                         selectedValue={tempVendor}
                         onSelect={(data) => {
                             setTempVendor('');
-                            setModalVendors((oldValue) => [...oldValue, data]);
+                            let is_exist = checkModalVendorExist(data);
+                            if(is_exist == false) 
+                            {
+                                setModalVendors((oldValue) => [...oldValue, data]);
+                            }
+                            
                         }}
                     />
                     {modalVendors.map((v, i) => {
@@ -461,13 +496,14 @@ const DefectEditScreen = ({ props, navigation }) => {
 
                     <DatePicker
                         label="Complete Date"
-                        initialDate={completeDate}
+                        initialDate={defectData?.complete_date ? defectData?.complete_date : defect.complete_date ? defect.complete_date : completeDate}
                         required={false}
                         onChange={(data) => {
                             setCompleteDate(data)
-                            setDefectData((prevState) => ({ ...prevState, complete_date: data }))
+                            setDefectData((prevState) => ({ ...prevState, complete_date: data }));
+                            onSubmitCreation(data);
                         }}
-                        selectedDate={completeDate} />
+                        selectedDate={defectData?.complete_date ? defectData?.complete_date : defect.complete_date ? defect.complete_date : completeDate} />
 
                     <Text style={{ marginTop: 20 }}>Add Before photos</Text>
 

@@ -53,7 +53,7 @@ const SelectPicker = props => {
                 <RNPickerSelect
                     key={Math.random()}
                     style={pickerSelectStyles}
-                    value={selectedValue}
+                    value={props.selectedValue}
                     onValueChange={(value, index) => { setSelectedValue(value); props.onSelect(value,index) }}
                     items={props.options ? props.options : options}
                     disabled={props.disabled ? props.disabled : false}

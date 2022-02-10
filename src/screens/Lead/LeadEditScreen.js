@@ -26,6 +26,7 @@ import {
     addLeadAppointment,
     addLeadRemark,
     setLeadStatus,
+    checkVenueAvailability,
 } from '../../services/lead';
 import DatePicker from '../../components/DatePicker';
 import { appointmentTimeOptions, appointmentMinutesOption, appointmentSecondVenue } from '../../constants/Appointment';
@@ -46,6 +47,7 @@ import * as Calendar from 'expo-calendar';
 import { store } from '../../store/store';
 import { Platform } from 'react-native';
 import { leadNormalSource, leadRefSource, salutations } from '../../constants/Lead';
+import { FlatList } from 'react-native';
 
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
@@ -79,7 +81,8 @@ const LeadEditScreen = ({ props, navigation }) => {
         appointmentTimeOptions[0].value
     );
     const [appointmentMinutes, setAppointmentMinutes] = useState(appointmentMinutesOption[0].value)
-    const [appointmentVenue, setAppointmentVenue] = useState('Office');
+    const [appointmentVenue, setAppointmentVenue] = useState('Site');
+    const [appointmentChildVenue, setAppointmentChildVenue] = useState([]);
     const [appointmentVenueTwo, setAppointmentVenueTwo] = useState("");
     const [apptPax, setApptPax] = useState('');
     const [apptClientName, setApptClientName] = useState(null);
@@ -101,6 +104,8 @@ const LeadEditScreen = ({ props, navigation }) => {
     const [updateModalData, setUpdateModalData] = useState([]);
     const [hour, setHour] = useState("08");
     const [minute, setMinute] = useState("00");
+    const [hourEnd, setHourEnd] = useState("09");
+    const [minuteEnd, setMinuteEnd] = useState("00");
     const [appointmentDataLog, setAppointmentDataLog] = useState([]);
 
     const [oldEmail, setOldEmail] = useState("");
@@ -110,6 +115,15 @@ const LeadEditScreen = ({ props, navigation }) => {
     const [oldStreetName, setOldStreetName] = useState("");
     const [oldPostal, setOldPostal] = useState("");
     const [oldUnitNo, setOldUnitNo] = useState("");
+
+    const [checkingRule, setCheckingRule] = useState([]);
+    const [hourCompare, setHourCompare] = useState("");
+    const [hourCompareEnd, setHourCompareEnd] = useState("");
+    const [minuteCompare, setMinuteCompare] = useState("");
+    const [minuteCompareEnd, setMinuteCompareEnd] = useState("");
+    const [venueCompare, setVenueCompare] = useState("");
+    const [venueTwoCompare, setVenueTwoCompare] = useState("");
+    const [dateCompare, setDateCompare] = useState("");
 
     useEffect(() => {
         getRemarkSource().then((data) => rebuildRemarkOption(data.data));
@@ -140,9 +154,21 @@ const LeadEditScreen = ({ props, navigation }) => {
         singleLead(item.id).then((data) => {
             setData(data);
             setDataRemark([]);
+            // setItemData([]);
             rebuildRemarkObject(data.remarks);
+            console.log("A");
         });
-    }, [item.id, itemData, remarkData, statusData, onSubmitUpdate, addAppointment, appointmentDataLog]);
+    }, [item.id, remarkData, statusData, appointmentDataLog, onSubmitUpdate]);
+
+    useEffect(() => {
+        singleLead(item.id).then((data) => {
+            setData(data);
+            setDataRemark([]);
+            // setItemData([]);
+            rebuildRemarkObject(data.remarks);
+            console.log("B");
+        });
+    }, [itemData]);
 
     useEffect(() => {
         getPropertyType().then((data) => {
@@ -168,7 +194,7 @@ const LeadEditScreen = ({ props, navigation }) => {
             data.data.map((value) => {
                 setApptVenueOption((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name }
+                    { label: value.name, value: value.name, key: value.name, children: value.children }
                 ]);
             });
         });
@@ -196,7 +222,7 @@ const LeadEditScreen = ({ props, navigation }) => {
             data.data.map((value) => {
                 setCountryCodes((oldValue) => [
                     ...oldValue,
-                    { label: value.code + " - " + value.name, value: value.code, key: value.code }
+                    { label: value.code + " - " + value.name, value: value.code, key: value.code, is_checking: value.is_check_length, length_number: value.number_length }
                 ]);
 
                 setCountryList((oldValue) => [
@@ -216,6 +242,11 @@ const LeadEditScreen = ({ props, navigation }) => {
         });
     }, [item.id]);
 
+    useEffect(() => {
+        const filtered = countryCodes.find( res =>{ return res.value == item.country_code});
+        setCheckingRule(filtered);
+    },[countryCodes]);
+
     const rebuildRemarkObject = (data) => {
         data.map((value) => {
             setDataRemark((oldValue) => [
@@ -227,6 +258,22 @@ const LeadEditScreen = ({ props, navigation }) => {
             ]);
         });
     };
+
+    const changeDateStart = useCallback(
+        (data) => {
+            setHour(data);
+            var nextHour = parseInt(data) + 1;
+            var newHourEnd = nextHour.toString();
+
+            if(nextHour == 9)
+            {
+                newHourEnd = "0"+nextHour.toString();
+            }
+
+            setHourEnd(newHourEnd);
+        },
+        [hour],
+    )
 
     const counterArray = [
         'Call in',
@@ -315,6 +362,14 @@ const LeadEditScreen = ({ props, navigation }) => {
         setMinute(child);
     };
 
+    const onSelectTimeEnd = (child) => {
+        setHourEnd(child);
+    };
+
+    const onSelectMinuteEnd = (child) => {
+        setMinuteEnd(child);
+    };
+
     const onSelectStatus = (child) => {
         setData((prevState) => ({ ...prevState, status: child }));
     };
@@ -322,6 +377,15 @@ const LeadEditScreen = ({ props, navigation }) => {
     const appointmentModalToggle = () => {
         setAppointmentModal(!appointmentModal);
     };
+
+    const onPhoneNumberSubmit = () => {
+        if (checkingRule?.is_checking) {
+            if (data.contact_number.length != checkingRule?.length_number) {
+                Alert.alert("Invalid Input", `Please input ${checkingRule?.length_number} digits of number`);
+                return;
+            }
+        }
+    }
 
     const remarkModalToggle = () => {
         setRemarkModal(!remarkModal);
@@ -375,31 +439,87 @@ const LeadEditScreen = ({ props, navigation }) => {
         }
     };
 
-    const addAppointment = () => {
+    const addAppointment = async () => {
+        if(appointmentDate == "" || appointmentDate == null)
+        {
+            Alert.alert('Invalid Input','Please choose a date');
+            return;
+        }
+
+        if(hour == "" || minute == "")
+        {
+            Alert.alert('Invalid Input','Please choose start time');
+            return;
+        }
+
+        if(hourEnd == "" || minuteEnd == "")
+        {
+            Alert.alert('Invalid Input','Please choose end time');
+            return;
+        }
+
+        if(appointmentVenue == "")
+        {
+            Alert.alert('Invalid Input','Please choose venue');
+            return;
+        }
+
+        if(apptPax == "")
+        {
+            Alert.alert('Invalid Input','Please fill pax field');
+            return;
+        }
+
         if (isCalendar) {
             addEvent().then((data) => console.log("Event added"));
         }
 
+
         if (Platform.OS == "ios") {
             addEvent().then((data) => console.log("Event added"));
+        }
+
+        var venueAvailability = await checkVenueAvailability(
+            moment(appointmentDate,'DD-MM-YYYY').format('YYYY-MM-DD'),
+            hour + ":" + minute,
+            hourEnd + ":" + minuteEnd,
+            appointmentVenue,
+            appointmentVenueTwo
+        );
+
+        if(venueAvailability.is_available == false)
+        {
+            
+            var msg = "Venue already booked for this range time \n\n";
+            venueAvailability.data.map((item,index) => {
+                msg += `Booking Details: \nVenue: ${item.venue_two ? item.venue + '|' + item.venue_two : item.venue }\nDate & Time: ${item.date}, ${item.time} - ${item.time_end}\n\n`
+            });
+
+            Alert.alert("Appointment", msg);
+            return;
         }
 
         let appointmentItem = {
             lead_id: item.id,
             company_id: 1,
             name: 'Appointment',
-            date: moment(appointmentDate).format('YYYY-MM-DD'),
+            date: moment(appointmentDate,'DD-MM-YYYY').format('YYYY-MM-DD'),
             venue: appointmentVenue,
             time: hour + ":" + minute,
+            time_end: hourEnd + ":" + minuteEnd,
             client_name: apptClientName ? apptClientName : item.client_name,
             sales_name: apptSalesName ? apptSalesName : item.direct_salesman?.name,
             pax: apptPax,
             venue_two: appointmentVenueTwo
         };
-        setItemData([...itemData, appointmentItem]);
+
         addLeadAppointment(appointmentItem)
             .then(appointmentModalToggle())
             .then(() => {
+                setItemData((oldValue) => [
+                    ...oldValue,
+                    appointmentItem
+                ]);
                 setAppointmentVenue('Office');
                 setAppointmentDate(new Date());
                 setInitialApptDate(null);
@@ -408,18 +528,46 @@ const LeadEditScreen = ({ props, navigation }) => {
                 setAppointmentTime(appointmentTimeOptions[0].value);
                 setHour("08");
                 setMinute("00");
+                setHourEnd("09");
+                setMinuteEnd("00");
                 setApptPax("");
                 setAppointmentVenueTwo("");
             });
     };
 
-    const updateAppointment = () => {
+    const updateAppointment = async () => {
+
+        if(hour + ":" + minute != hourCompare + ":" + minuteCompare || hourEnd + ":" + minuteEnd != hourCompareEnd + ":" + minuteCompareEnd || venueTwoCompare != updateModalData?.venue_two || venueCompare != updateModalData?.venue || dateCompare !=  moment(updateModalData?.date,'DD-MM-YYYY').format('YYYY-MM-DD'))
+        {
+            var venueAvailability = await checkVenueAvailability(
+                moment(updateModalData?.date,'DD-MM-YYYY').format('YYYY-MM-DD'),
+                hour + ":" + minute,
+                hourEnd + ":" + minuteEnd,
+                updateModalData?.venue,
+                updateModalData?.venue_two
+            );
+    
+            if(venueAvailability.is_available == false)
+            {
+                
+                var msg = "Venue already booked for this range time \n\n";
+                venueAvailability.data.map((item,index) => {
+                    msg += `Booking Details: \nVenue: ${item.venue_two ? item.venue + '|' + item.venue_two : item.venue }\nDate & Time: ${item.date}, ${item.time} - ${item.time_end}\n\n`
+                });
+
+                Alert.alert("Appointment", msg);
+                return;
+            }
+        }
+
+
         let appointmentItem = {
             appointmentId: updateModalData?.id,
             name: 'Appointment',
-            date: moment(updateModalData?.date).format('YYYY-MM-DD'),
+            date: moment(updateModalData?.date,'DD-MM-YYYY').format('YYYY-MM-DD'),
             venue: updateModalData?.venue,
             time: hour + ":" + minute,
+            time_end : hourEnd + ":" + minuteEnd,
             client_name: updateModalData?.client_name,
             sales_name: updateModalData?.sales_name,
             pax: updateModalData?.pax,
@@ -475,6 +623,10 @@ const LeadEditScreen = ({ props, navigation }) => {
         }
         if (data?.contact_number == '' || data?.contact_number == null) {
             msg += 'Please fill phone number \n';
+            failCounter++;
+        }
+        if (data?.contact_number.length != checkingRule?.length_number) {
+            msg += 'Please input the correct lenght of phone number \n';
             failCounter++;
         }
         if (data?.source_id == '' || data?.source_id == null) {
@@ -573,6 +725,31 @@ const LeadEditScreen = ({ props, navigation }) => {
         );
     };
 
+    const renderAppt = ({item, index}) => (
+            <Appointment
+            item={item}
+            no={index + 1}
+            onViewPress={() => {
+                setShowUpdateModal(!showUpdateModal);
+                setUpdateModalData(item);
+                setHour(item.time.split(":")[0]);
+                setMinute(item.time.split(":")[1]);
+                setHourEnd(item.time_end?.split(":")[0]);
+                setMinuteEnd(item.time_end?.split(":")[1]);
+
+                // COMPARING DATA
+                setHourCompare(item.time.split(":")[0]);
+                setMinuteCompare(item.time.split(":")[1]);
+                setHourCompareEnd(item.time_end?.split(":")[0]);
+                setMinuteCompareEnd(item.time_end?.split(":")[1]);
+                setVenueCompare(item.venue);
+                setVenueTwoCompare(item.venue_two);
+                setDateCompare(moment(item.date,'DD-MM-YYYY').format('YYYY-MM-DD'));
+            }
+            }
+        />
+    );
+
     if (!data) return false;
     return (
         <KeyboardAvoidingView behavior={Platform.OS == "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20} style={{ flex: 1, paddingBottom: 50 }}>
@@ -600,8 +777,8 @@ const LeadEditScreen = ({ props, navigation }) => {
                         <DatePicker
                             required={true}
                             label="Date"
-                            initialDate={updateModalData?.date ? updateModalData.date : null}
-                            selectedDate={new Date(updateModalData?.date)}
+                            initialDate={updateModalData?.date ? new Date(moment(updateModalData.date,'DD-MM-YYYY').format()) : new Date()}
+                            selectedDate={new Date(moment(updateModalData.date,'DD-MM-YYYY').format())}
                             onChange={(data) =>
                                 {
                                     setUpdateModalData((prevState) => ({ ...prevState, date: data }));
@@ -610,6 +787,9 @@ const LeadEditScreen = ({ props, navigation }) => {
                                 
                             }
                         />
+                        <View>
+                            <Text>Start Time</Text>
+                        </View>
                         <View style={{ flexDirection: 'row', marginTop: -10 }}>
                             <View style={{ width: '50%' }}>
                                 <SelectPicker
@@ -617,7 +797,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                                     required={true}
                                     selectedValue={hour}
                                     options={appointmentTimeOptions}
-                                    onSelect={(data) => {console.log(data);setHour(data)}}
+                                    onSelect={(data) => changeDateStart(data)}
                                 />
                             </View>
                             <View style={{ width: '50%' }}>
@@ -630,23 +810,49 @@ const LeadEditScreen = ({ props, navigation }) => {
                                 />
                             </View>
                         </View>
-                        {/* <TextField
-                        placeholder="Venue"
-                        required={true}
-                        editable={true}
-                        label="Venue"
-                        onChange={(data) =>
-                            setUpdateModalData((prevState) => ({ ...prevState, venue: data }))
-                        }
-                        value={updateModalData?.venue}
-                    /> */}
+
+                        <View>
+                            <Text>End Time</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', marginTop: -10 }}>
+                            <View style={{ width: '50%' }}>
+                                <SelectPicker
+                                    label="Hour"
+                                    required={true}
+                                    selectedValue={hourEnd}
+                                    options={appointmentTimeOptions}
+                                    onSelect={(data) => {setHourEnd(data)}}
+                                />
+                            </View>
+                            <View style={{ width: '50%' }}>
+                                <SelectPicker
+                                    label="Minutes"
+                                    required={true}
+                                    selectedValue={minuteEnd}
+                                    options={appointmentMinutesOption}
+                                    onSelect={(data) => setMinuteEnd(data)}
+                                />
+                            </View>
+                        </View>
+                        
                         <SelectPicker
                             label="Venue"
                             required={true}
                             selectedValue={updateModalData?.venue}
                             options={apptVenueOption}
-                            onSelect={(data) => {
-                                setUpdateModalData((prevState) => ({ ...prevState, venue: data }))
+                            onSelect={(data, index) => {
+                                setUpdateModalData((prevState) => ({ ...prevState, venue: data }));
+                                if(apptVenueOption[index-1].children.length > 0)
+                                {
+                                    setAppointmentChildVenue([]);
+                                    apptVenueOption[index-1].children.map((value) => {
+                                        
+                                        setAppointmentChildVenue((oldValue) => [
+                                            ...oldValue,
+                                            { label: value.name, value: value.name, key: value.name }
+                                        ]);
+                                    });
+                                }
                                 if (data != "Studio" || updateModalData?.venue != "Studio") {
                                     setUpdateModalData((prevState) => ({ ...prevState, venue_two: '' }))
                                 }
@@ -658,8 +864,10 @@ const LeadEditScreen = ({ props, navigation }) => {
                                 <SelectPicker
                                     required={false}
                                     selectedValue={updateModalData?.venue_two}
-                                    options={appointmentSecondVenue}
-                                    onSelect={(data) => setUpdateModalData((prevState) => ({ ...prevState, venue_two: data }))}
+                                    options={appointmentChildVenue}
+                                    onSelect={(data, index) => {
+                                        setUpdateModalData((prevState) => ({ ...prevState, venue_two: data }));
+                                }}
                                 />
                             )
                         }
@@ -731,41 +939,75 @@ const LeadEditScreen = ({ props, navigation }) => {
                             onChange={onSelectedDate}
                             selectedDate={appointmentDate}
                         />
+
+                        <View>
+                        <Text>Start Time</Text>
+                        </View>
                         <View style={{ flexDirection: 'row', marginTop: -10 }}>
                             <View style={{ width: '50%' }}>
                                 <SelectPicker
                                     label="Hour"
                                     required={true}
-                                    selectedValue={appointmentTime}
+                                    selectedValue={hour}
                                     options={appointmentTimeOptions}
-                                    onSelect={onSelectTime}
+                                    onSelect={(data) => changeDateStart(data)}
                                 />
                             </View>
                             <View style={{ width: '50%' }}>
                                 <SelectPicker
                                     label="Minutes"
                                     required={true}
-                                    selectedValue={appointmentMinutes}
+                                    selectedValue={minute}
                                     options={appointmentMinutesOption}
                                     onSelect={onSelectMinute}
                                 />
                             </View>
                         </View>
-                        {/* <TextField
-                        placeholder="Venue"
-                        required={true}
-                        editable={true}
-                        label="Venue"
-                        onChange={(venue) => setAppointmentVenue(venue)}
-                        value={appointmentVenue}
-                    /> */}
+
+                        <View>
+                        <Text>End Time</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', marginTop: -10 }}>
+                            <View style={{ width: '50%' }}>
+                                <SelectPicker
+                                    label="Hour"
+                                    required={true}
+                                    selectedValue={hourEnd}
+                                    options={appointmentTimeOptions}
+                                    onSelect={onSelectTimeEnd}
+                                />
+                            </View>
+                            <View style={{ width: '50%' }}>
+                                <SelectPicker
+                                    label="Minutes"
+                                    required={true}
+                                    selectedValue={minuteEnd}
+                                    options={appointmentMinutesOption}
+                                    onSelect={onSelectMinuteEnd}
+                                />
+                            </View>
+                        </View>
+
                         <SelectPicker
                             label="Venue"
                             required={true}
                             selectedValue={appointmentVenue}
                             options={apptVenueOption}
-                            onSelect={(data) => {
+                            onSelect={(data, index) => {
                                 setAppointmentVenue(data);
+                                
+                                if(apptVenueOption[index-1].children.length > 0)
+                                {
+                                    setAppointmentChildVenue([]);
+                                    apptVenueOption[index-1].children.map((value) => {
+                                        
+                                        setAppointmentChildVenue((oldValue) => [
+                                            ...oldValue,
+                                            { label: value.name, value: value.name, key: value.name }
+                                        ]);
+                                    });
+                                }
+
                                 if (data != "Studio") {
                                     setAppointmentVenueTwo("");
                                 }
@@ -778,7 +1020,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                                 <SelectPicker
                                     required={false}
                                     selectedValue={appointmentVenueTwo}
-                                    options={appointmentSecondVenue}
+                                    options={appointmentChildVenue}
                                     onSelect={(data) => setAppointmentVenueTwo(data)}
                                 />
                             )
@@ -790,6 +1032,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                             required={false}
                             editable={true}
                             label="Pax"
+                            keyboardType='numeric'
                             onChange={(pax) => setApptPax(pax)}
                             value={apptPax}
                         />
@@ -961,7 +1204,11 @@ const LeadEditScreen = ({ props, navigation }) => {
                                     required={true}
                                     selectedValue={data.country_code ? data.country_code : item.country_code}
                                     options={countryCodes}
-                                    onSelect={(data) => setData((prevState) => ({ ...prevState, country_code: data }))}
+                                    onSelect={(data, index) => {
+                                        setData((prevState) => ({ ...prevState, country_code: data }));
+                                        setCheckingRule(countryCodes[index-1]);
+                                        setData((prevState) => ({ ...prevState, contact_number: "" }));
+                                    }}
                                 />
                             </View>
                             <View style={{ width: '69%' }}>
@@ -971,8 +1218,11 @@ const LeadEditScreen = ({ props, navigation }) => {
                                     required={true}
                                     label="Contact Number"
                                     value={data.contact_number}
+                                    onEndEditing={onPhoneNumberSubmit}
                                     onChange={(data) =>
-                                        setData((prevState) => ({ ...prevState, contact_number: data }))
+                                        {
+                                            setData((prevState) => ({ ...prevState, contact_number: data }));
+                                        }
                                     }
                                 />
                             </View>
@@ -1276,7 +1526,7 @@ const LeadEditScreen = ({ props, navigation }) => {
                                 <SelectPicker
                                     key="COUNTRY_LIST"
                                     options={countryList}
-                                    onChange={(data) => {
+                                    onSelect={(data) => {
                                         setData((prevState) => ({ ...prevState, country_name: data }))
                                     }
                                     }
@@ -1322,8 +1572,16 @@ const LeadEditScreen = ({ props, navigation }) => {
                         </View>
                     )}
                     <View style={{ flexDirection: 'column' }}>
-                        {data.appointment &&
-                            data.appointment.map((item, index) => {
+                            {/* <FlatList
+                                removeClippedSubviews={true}
+                                keyExtractor={(item) => item.id.toString()}
+                                data={data.appointment}
+                                renderItem={renderAppt}
+                                initialNumToRender={25}
+                                updateCellsBatchingPeriod={50}
+                            /> */}
+                        {data?.appointment &&
+                            data?.appointment.map((item, index) => {
                                 return (
                                     <Appointment
                                         item={item}
@@ -1333,6 +1591,17 @@ const LeadEditScreen = ({ props, navigation }) => {
                                             setUpdateModalData(item);
                                             setHour(item.time.split(":")[0]);
                                             setMinute(item.time.split(":")[1]);
+                                            setHourEnd(item.time_end?.split(":")[0]);
+                                            setMinuteEnd(item.time_end?.split(":")[1]);
+
+                                            // COMPARING DATA
+                                            setHourCompare(item.time.split(":")[0]);
+                                            setMinuteCompare(item.time.split(":")[1]);
+                                            setHourCompareEnd(item.time_end?.split(":")[0]);
+                                            setMinuteCompareEnd(item.time_end?.split(":")[1]);
+                                            setVenueCompare(item.venue);
+                                            setVenueTwoCompare(item.venue_two);
+                                            setDateCompare(moment(item.date,'DD-MM-YYYY').format('YYYY-MM-DD'));
                                         }
                                         }
                                     />

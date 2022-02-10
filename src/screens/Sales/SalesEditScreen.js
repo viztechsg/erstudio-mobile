@@ -34,10 +34,9 @@ import { addLeadRemark, getPropertyType, getSourceLead } from '../../services/le
 import { createSalesProject, getSalesData, updateSalesProject } from '../../actions/salesAction'
 import { addProjectRemark, addProjectWorkSchedule, getSingleProject } from '../../services/sales'
 import WorkSchedule from '../../components/Sales/WorkSchedule'
-import { getRemarkSource, getSowSource, getVendorSource } from '../../services/config'
+import { getRemarkSource, getSowSource, getVendorSource, getVendorSow } from '../../services/config'
 import { RadioButton } from 'react-native-paper';
 import { getProjectVendorList } from '../../services/projectDefect'
-
 const SalesEditScreen = ({ props, navigation }) => {
 
     const { item } = navigation.state.params;
@@ -84,7 +83,8 @@ const SalesEditScreen = ({ props, navigation }) => {
     const initVendor = () => {
         setVendor("");
         if (sowId != "") {
-            getProjectVendorList(item.id, sowId).then((data) => {
+            getVendorSow(sowId).then((data) => {
+                console.log(data)
                 setVendorOption([]);
                 data.map((value) => {
                     if(value.vendor_id != null)
@@ -178,7 +178,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                 ...oldValue,
                 {
                     time: moment(value.created_at).format('DD/MM/YYYY'),
-                    title: value.title,
+                    title: value.remark,
                 },
             ]);
         });

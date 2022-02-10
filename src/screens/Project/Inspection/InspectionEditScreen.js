@@ -37,6 +37,7 @@ import {
     updateProjectInspection,
 } from '../../../services/projectInspection';
 import { Platform } from 'react-native';
+import { getProjectVendorList, getVendorByProject } from '../../../services/projectDefect';
 const InspectionEditScreen = ({ props, navigation }) => {
     const { project_id, item } = navigation.state.params;
     const [sowOptions, setSowOptions] = useState([]);
@@ -79,6 +80,29 @@ const InspectionEditScreen = ({ props, navigation }) => {
     const [modalVendors, setModalVendors] = useState([]);
     const [tempVendor, setTempVendor] = useState('');
 
+    const initVendor = () => {
+        if (PIData?.scope_of_work_id != "" || item.scope_of_work_id != "") {
+            getProjectVendorList(project_id, PIData?.scope_of_work_id || item.scope_of_work_id).then((data) => {
+                setVendorOptions([]);
+                data.map((value) => {
+                    if (value.vendor_id != null) {
+                        setVendorOptions((oldValue) => [
+                            ...oldValue,
+                            { label: value.vendor.name, value: value.vendor.id, key: value.vendor.name },
+                        ]);
+                    }
+                });
+            })
+        }
+        else {
+            setVendorOptions([]);
+        }
+    }
+
+    useEffect(() => {
+        initVendor();
+    },[PIData?.scope_of_work_id,project_id]);
+
     useEffect(() => {
         getSowSource().then((data) => {
             setSowOptions([]);
@@ -103,21 +127,22 @@ const InspectionEditScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-        getVendorSource().then((data) => {
-            setVendorOptions([]);
-            data.data.map((value) => {
-                setVendorOptions((oldValue) => [
-                    ...oldValue,
-                    { label: value.name, value: value.id, key: value.name },
-                ]);
-            });
-        });
-        getVendorSource().then((data) => {
+
+        // getVendorSource().then((data) => {
+        //     setVendorOptions([]);
+        //     data.data.map((value) => {
+        //         setVendorOptions((oldValue) => [
+        //             ...oldValue,
+        //             { label: value.name, value: value.id, key: value.name },
+        //         ]);
+        //     });
+        // });
+        getVendorByProject(project_id).then((data) => {
             setVendorModalOptions([]);
-            data.data.map((value) => {
+            data.map((value) => {
                 setVendorModalOptions((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name },
+                    { label: value.vendor ? value.vendor.name : value.vendor_name, value: value.vendor ? value.vendor.name : value.vendor_name, key: value.vendor ? value.vendor.name : value.vendor_name },
                 ]);
             });
         });
@@ -185,6 +210,19 @@ const InspectionEditScreen = ({ props, navigation }) => {
             status: PIData.status,
         };
 
+        if(modalRemark == "")
+        {
+
+            Alert.alert("Invalid Input","Please type the remark");
+            return;
+        }
+
+        if(modalVendors.length < 1)
+        {
+            Alert.alert("Invalid Input","Please select at least 1 vendor");
+            return;
+        }
+
         addPIRemark(payload)
             .then(() => {
                 setRemarkModal("");
@@ -199,6 +237,17 @@ const InspectionEditScreen = ({ props, navigation }) => {
             )
             .then(toggleRemark());
     };
+
+    
+    const checkModalVendorExist = (name) => {
+        const found = modalVendors.some(el => el === name);
+
+        if(found) {
+            Alert.alert("Invalid Input","You have added this vendor");
+            return true;
+        }
+        return false;
+    }
 
     const pickImage = async () => {
         const options = {
@@ -374,7 +423,15 @@ const InspectionEditScreen = ({ props, navigation }) => {
                         selectedValue={tempVendor}
                         onSelect={(data) => {
                             setTempVendor('');
-                            setModalVendors((oldValue) => [...oldValue, data]);
+                            let is_exist = checkModalVendorExist(data);
+                            if(is_exist == false)
+                            {
+                                setModalVendors((oldValue) => [
+                                    ...oldValue,
+                                    data
+                                ]);
+                            }
+                            
                         }}
                     />
                     {modalVendors.map((v, i) => {
@@ -420,6 +477,7 @@ const InspectionEditScreen = ({ props, navigation }) => {
                         options={sowOptions}
                         selectedValue={PIData.scope_of_work_id || item.scope_of_work_id}
                         onSelect={(data) =>
+                            
                             setPIData((prevState) => ({ ...prevState, scope_of_work_id: data }))
                         }
                     />

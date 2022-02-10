@@ -8,7 +8,7 @@ import {
 }
     from "react-native";
 import { Card, Badge } from 'react-native-elements';
-import moment from 'moment';
+import moment from 'moment-business-time';
 const Appointment = props => {
 
     return (
@@ -22,10 +22,10 @@ const Appointment = props => {
                     {/* DATE AND TIME */}
                     <View style={{ flexDirection: 'row', justifyContent:'space-around', alignItems:'flex-start', marginBottom:5 }}>
                         <View style={{ width: '50%' }}>
-                            <Text>{moment(props.item.date).format('ddd, DD MMM YYYY')}</Text>
+                            <Text>{moment(props.item.date,'DD-MM-YYYY').format('DD MMM YYYY')}</Text>
                         </View>
                         <View style={{ width: '50%' }}>
-                            <Text style={{ color: 'black' }}>{props.item.time}</Text>
+                            <Text style={{ color: 'black' }}>{props.item.time} - {props.item.time_end || "Done"}</Text>
                         </View>
                     </View>
                     <View>

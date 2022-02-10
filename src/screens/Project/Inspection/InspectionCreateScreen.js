@@ -16,6 +16,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import moment from 'moment';
 import { addProjectInspection } from '../../../services/projectInspection';
 import { Platform } from 'react-native';
+import { getProjectVendorList, getVendorByProject } from '../../../services/projectDefect';
 
 const InspectionCreateScreen = ({ props, navigation }) => {
     const { project_id } = navigation.state.params;
@@ -57,6 +58,29 @@ const InspectionCreateScreen = ({ props, navigation }) => {
     const [modalVendors, setModalVendors] = useState([]);
     const [tempVendor, setTempVendor] = useState("");
 
+    const initVendor = () => {
+        if (sowId != "") {
+            getProjectVendorList(project_id, sowId).then((data) => {
+                setVendorOptions([]);
+                data.map((value) => {
+                    if (value.vendor_id != null) {
+                        setVendorOptions((oldValue) => [
+                            ...oldValue,
+                            { label: value.vendor.name, value: value.vendor.id, key: value.vendor.name },
+                        ]);
+                    }
+                });
+            })
+        }
+        else {
+            setVendorOptions([]);
+        }
+    }
+
+    useEffect(() => {
+        initVendor();
+    },[sowId,project_id]);
+
     useEffect(() => {
         getSowSource().then((data) => {
             setSowOptions([]);
@@ -76,21 +100,40 @@ const InspectionCreateScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-        getVendorSource().then((data) => {
-            setVendorOptions([]);
+        // getVendorSource().then((data) => {
+        //     setVendorOptions([]);
+        //     setVendorModalOptions([]);
+        //     data.data.map((value) => {
+        //         setVendorOptions((oldValue) => [
+        //             ...oldValue,
+        //             { label: value.name, value: value.id, key: value.name },
+        //         ]);
+        //         setVendorModalOptions((oldValue) => [
+        //             ...oldValue,
+        //             { label: value.name, value: value.name, key: value.name },
+        //         ]);
+        //     });
+        // });
+        getVendorByProject(project_id).then((data) => {
             setVendorModalOptions([]);
-            data.data.map((value) => {
-                setVendorOptions((oldValue) => [
-                    ...oldValue,
-                    { label: value.name, value: value.id, key: value.name },
-                ]);
+            data.map((value) => {
                 setVendorModalOptions((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name },
+                    { label: value.vendor ? value.vendor.name : value.vendor_name, value: value.vendor ? value.vendor.name : value.vendor_name, key: value.vendor ? value.vendor.name : value.vendor_name },
                 ]);
             });
         });
     }, [project_id]);
+
+    const checkModalVendorExist = (name) => {
+        const found = modalVendors.some(el => el === name);
+
+        if(found) {
+            Alert.alert("Invalid Input","You have added this vendor");
+            return true;
+        }
+        return false;
+    }
 
     const onSubmitCreation = () => {
         let payload = {
@@ -103,6 +146,25 @@ const InspectionCreateScreen = ({ props, navigation }) => {
             remarks: remarks,
             images: images,
         }
+
+        if(soiId == "")
+        {
+            Alert.alert("Invalid Input","Please select an inspection scope");
+            return;
+        }
+
+        if(sowId == "")
+        {
+            Alert.alert("Invalid Input","Please select a work scope");
+            return;
+        }
+
+        if(vendorId == "")
+        {
+            Alert.alert("Invalid Input","Please select a vendor");
+            return;
+        }
+
         addProjectInspection(payload).then(Alert.alert('Success', 'Inspection added'));
 
     }
@@ -144,6 +206,18 @@ const InspectionCreateScreen = ({ props, navigation }) => {
             remark: modalRemark,
             vendors: modalVendors,
             status: status
+        }
+
+        if(modalRemark == "")
+        {
+            Alert.alert("Invalid Input","Please type the remark");
+            return;
+        }
+
+        if(modalVendors.length < 1)
+        {
+            Alert.alert("Invalid Input","Please select at least 1 vendor");
+            return;
         }
 
         setRemarks((oldValue) => [
@@ -292,10 +366,14 @@ const InspectionCreateScreen = ({ props, navigation }) => {
                     <LongText label="Remark" required={true} onChange={(data) => setRemarkModal(data)} />
                     <SelectPicker label="Vendor" required={true} options={vendorModalOptions} selectedValue={tempVendor} onSelect={(data) => {
                         setTempVendor("");
-                        setModalVendors((oldValue) => [
-                            ...oldValue,
-                            data
-                        ]);
+                        let is_exist = checkModalVendorExist(data);
+                        if(is_exist == false)
+                        {
+                            setModalVendors((oldValue) => [
+                                ...oldValue,
+                                data
+                            ]);
+                        }
                     }} />
                     {
                         modalVendors.map((v, i) => {

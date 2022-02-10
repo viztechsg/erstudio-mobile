@@ -10,7 +10,7 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import InspectionRemarkItem from '../../../components/Project/InspectionRemarkItem';
 import DefectRemarkItem from '../../../components/Project/DefectRemarkItem';
 import { getAreaSource, getSowSource, getVendorSource } from '../../../services/config';
-import { addProjectDefect, addProjectVendorList, getProjectVendorList } from '../../../services/projectDefect';
+import { addProjectDefect, addProjectVendorList, getProjectVendorList, getVendorByProject } from '../../../services/projectDefect';
 import { Overlay } from 'react-native-elements';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -126,12 +126,13 @@ const DefectCreationScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-        getVendorSource().then((data) => {
+
+        getVendorByProject(project_id).then((data) => {
             setVendorModalOptions([]);
-            data.data.map((value) => {
+            data.map((value) => {
                 setVendorModalOptions((oldValue) => [
                     ...oldValue,
-                    { label: value.name, value: value.name, key: value.name },
+                    { label: value.vendor ? value.vendor.name : value.vendor_name, value: value.vendor ? value.vendor.name : value.vendor_name, key: value.vendor ? value.vendor.name : value.vendor_name },
                 ]);
             });
         });
@@ -180,6 +181,18 @@ const DefectCreationScreen = ({ props, navigation }) => {
             vendors: modalVendors,
         }
 
+        if(modalRemark == "")
+        {
+            Alert.alert("Invalid Input","Please type the remark");
+            return;
+        }
+
+        if(modalVendors.length < 1)
+        {
+            Alert.alert("Invalid Input","Please select at least 1 vendor");
+            return;
+        }
+
         setRemarks((oldValue) => [
             ...oldValue,
             payload
@@ -188,8 +201,8 @@ const DefectCreationScreen = ({ props, navigation }) => {
         toggleRemark();
     }
 
-    const pickImage = async (tp = "") => {
-        var _type = tp || type;
+    const pickImage = async (tp) => {
+        let cameraType = tp ? tp : type;
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -214,17 +227,17 @@ const DefectCreationScreen = ({ props, navigation }) => {
             let payload = {
                 image: 'data:image/png;base64,' + base64,
                 capture_time: captureOn,
-                type: _type
+                type: cameraType
             }
 
-            if (_type == "BEFORE") {
+            if (cameraType == "BEFORE") {
                 setBeforeImages((oldData) => [
                     ...oldData,
                     payload
                 ]);
             }
 
-            if (_type == "AFTER") {
+            if (cameraType == "AFTER") {
                 setAfterImages((oldData) => [
                     ...oldData,
                     payload
@@ -243,8 +256,9 @@ const DefectCreationScreen = ({ props, navigation }) => {
         }
     };
 
-    const captureImage = async (tp = "") => {
-        var _type = tp || type;
+    const captureImage = async (tp) => {
+        let cameraType = tp ? tp : type;
+        console.log(cameraType)
         const options = {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: false,
@@ -268,17 +282,19 @@ const DefectCreationScreen = ({ props, navigation }) => {
             let payload = {
                 image: 'data:image/png;base64,' + base64,
                 capture_time: captureOn,
-                type: _type
+                type: cameraType
             }
 
-            if (_type == "BEFORE") {
+
+
+            if (cameraType == "BEFORE") {
                 setBeforeImages((oldData) => [
                     ...oldData,
                     payload
                 ]);
             }
 
-            if (_type == "AFTER") {
+            if (cameraType == "AFTER") {
                 setAfterImages((oldData) => [
                     ...oldData,
                     payload
@@ -329,6 +345,26 @@ const DefectCreationScreen = ({ props, navigation }) => {
         // console.log(payload)
     }
 
+    const checkVendorExist = (name) => {
+        const found = vendors.some(el => el.name === name);
+
+        if(found) {
+            Alert.alert("Invalid Input","You have added this vendor");
+            return true;
+        }
+        return false;
+    }
+
+    const checkModalVendorExist = (name) => {
+        const found = modalVendors.some(el => el === name);
+
+        if(found) {
+            Alert.alert("Invalid Input","You have added this vendor");
+            return true;
+        }
+        return false;
+    }
+
     return (
         <View style={{
             flex: 1,
@@ -345,8 +381,8 @@ const DefectCreationScreen = ({ props, navigation }) => {
             >
                 <SafeAreaView>
                     <Text style={{ fontSize: 20, color: 'grey' }}>Select Image</Text>
-                    <DefaultButton textButton="Browse" onPress={pickImage} />
-                    <DefaultButton textButton="Capture" onPress={captureImage} />
+                    <DefaultButton textButton="Browse" onPress={() => pickImage("")} />
+                    <DefaultButton textButton="Capture" onPress={() => captureImage("")} />
                 </SafeAreaView>
             </Overlay>
             <LoadingState content="Please wait.." isUploading={isUploading} />
@@ -362,10 +398,15 @@ const DefectCreationScreen = ({ props, navigation }) => {
                     <LongText label="Remark" required={true} onChange={(data) => setRemarkModal(data)} />
                     <SelectPicker label="Vendor" required={true} options={vendorModalOptions} selectedValue={tempVendor} onSelect={(data) => {
                         setTempVendor("");
-                        setModalVendors((oldValue) => [
-                            ...oldValue,
-                            data
-                        ]);
+                        let is_exist = checkModalVendorExist(data);
+                        if(is_exist == false)
+                        {
+                            setModalVendors((oldValue) => [
+                                ...oldValue,
+                                data
+                            ]);
+                        }
+
                     }} />
                     {
                         modalVendors.map((v, i) => {
@@ -392,13 +433,18 @@ const DefectCreationScreen = ({ props, navigation }) => {
                     <SelectPicker label="Sow" required={true} options={sowOptions} onSelect={(data) => setSowId(data)} />
                     <SelectPicker label="Vendor" required={true} options={vendorOptions} onSelect={(data, index) => {
                         setVendorId(data);
-                        setVendors((prevState) => [
-                            ...prevState,
-                            {
-                                id: data,
-                                name: vendorOptions[index - 1].label
-                            }
-                        ]);
+                        let is_exist = checkVendorExist(vendorOptions[index - 1].label);
+                        if(is_exist == false)
+                        {
+                            setVendors((prevState) => [
+                                ...prevState,
+                                {
+                                    id: data,
+                                    name: vendorOptions[index - 1].label
+                                }
+                            ]);
+                        }
+
                     }} />
                     <View style={{ alignItems: 'center', marginTop: 10 }}><Text>--OR--</Text></View>
                     <TextField placeholder="Vendor Name" onChange={data => setFreeVendor(data)} />

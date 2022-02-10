@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { StyleSheet, Text, View, Image, Button, TouchableOpacity } from 'react-native';
 import { Checkbox } from 'react-native-paper';
 import SignatureScreen from 'react-native-signature-canvas';
@@ -61,7 +62,7 @@ const SalesSignDocument = ({ navigation, onOK }) => {
                         source={{ uri: signature }}
                     />
                 ) : null} */}
-                <Text style={{ color: 'white', fontSize: 16 }}>Customer's Sign</Text>
+                <Text style={{ color: 'white', fontSize: 16 }}>Customer's Signature</Text>
             </View>
             <View style={styles.container}>
                 <SignatureScreen
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         backgroundColor: "black",
-        padding: 20,
+        padding: Platform.OS == "ios" ? 2 : 20,
     },
     previewText: {
         color: "#FFF",

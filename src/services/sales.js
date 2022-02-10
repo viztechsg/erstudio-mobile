@@ -3,43 +3,56 @@ import api from '../api/api';
 import { store } from '../store/store';
 import moment from 'moment';
 
+export function getSalesList(status = '', start_date = '', end_date = '', needAttention = "no-need") {
+    return api.get(`/projects?status=${status}&start_date=${start_date}&end_date=${end_date}&needAttention=${needAttention}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then((data) => {
+            return data.data.data.items;
+        })
+        .catch((error) => {
+            console.log(error.response);
+        });
+}
+
 export function getSingleProject(project_id) {
     return api.get(`/projects/${project_id}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
-    }) 
-    .then( response => {
-            return response.data.data.project;
     })
-    .catch(err => console.log(err));
+        .then(response => {
+            return response.data.data.project;
+        })
+        .catch(err => console.log(err));
 }
 
-export function addProjectWorkSchedule(data)
-{
-    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work,sow_id } = data;
+export function addProjectWorkSchedule(data) {
+    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work, sow_id } = data;
     return api.post('/work-schedules',
-    {
-        project_id,
-        vendor_id,
-        venue,
-        scope_of_work,
-        start_date,
-        end_date,
-        sow_id
-    },
-    {
-        headers: {
-            Authorization: `Bearer ${store.getState().loginReducer.token}`
-        }
-    })
-    .then(() => {
-        Alert.alert("Add work schedule", "Success");
-    })
-    .catch((error) => {
-        Alert.alert("Add work schedule error", error.response.message);
-        console.log(error.response);
-    })
+        {
+            project_id,
+            vendor_id,
+            venue,
+            scope_of_work,
+            start_date,
+            end_date,
+            sow_id
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then(() => {
+            Alert.alert("Add work schedule", "Success");
+        })
+        .catch((error) => {
+            Alert.alert("Add work schedule error", error.response.message);
+            console.log(error.response);
+        })
 }
 
 export function addProjectRemark(data) {
@@ -63,4 +76,16 @@ export function addProjectRemark(data) {
             Alert.alert("Create Lead Error", error.response.message);
             console.log(error.response);
         })
+}
+
+export function getVaritaionOrderUrl(vo_id) {
+    return api.get(`/variation-order-view/${vo_id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data.url;
+        })
+        .catch(err => console.log(err.response));
 }

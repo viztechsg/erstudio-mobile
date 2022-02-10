@@ -37,6 +37,7 @@ import { Platform } from 'react-native';
 import { Dimensions } from 'react-native';
 import { KeyboardAvoidingViewComponent } from 'react-native';
 import { leadNormalSource, leadRefSource, salutations } from '../../constants/Lead';
+
 const wait = (timeout) => {
     return new Promise((resolve) => setTimeout(resolve, timeout));
 };
@@ -56,7 +57,7 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [memo, setMemo] = useState("");
     const [salutation, setSalutation] = useState(salutations[0]);
     const [country_code, setCountryCode] = useState("65");
-    const [countryName, setCountryName] = useState("Singapore");
+    const [countryName, setCountryName] = useState("SG" || "Singapore");
     const [postalCode, setPostalCode] = useState('');
     const [roadName, setRoadName] = useState('');
     const [roadNo, setRoadNo] = useState('');
@@ -65,7 +66,7 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [normalSource, setNormalSource] = useState('');
     const [normalSourceTwo, setNormalSourceTwo] = useState('');
     const [normalNotes, setNormalNotes] = useState('');
-    const [groupId,setGroupId] = useState(1);
+    const [groupId, setGroupId] = useState(store.getState().loginReducer.data.user.default_company[0].company_group_id);
 
     const [status, setStatus] = useState('newlead');
     const [selectedAssign, setSelectedAssign] = useState(store.getState().loginReducer.id);
@@ -83,6 +84,9 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const [remarkModal, setRemarkModal] = useState(false);
     const [remarkCheckboxes, setRemarkCheckboxes] = useState([]);
     const [remarkId, setRemarkId] = useState(0);
+
+    // CHECKING COUNTRY LENGTH RULE
+    const [checkingRule, setCheckingRule] = useState([]);
     useEffect(() => {
         getRemarkSource().then((data) => rebuildRemarkOption(data.data));
         getCountryCodeSource().then((data) => { rebuildCountryCodeOption(data.data); rebuildCountryListOption(data.data) });
@@ -114,7 +118,7 @@ const LeadCreateScreen = ({ props, navigation }) => {
         data.map((value) => {
             setCountryCodes((oldValue) => [
                 ...oldValue,
-                { label: value.code + " - " + value.name, value: value.code, key: value.code },
+                { label: value.code + " - " + value.name, value: value.code, key: value.code, is_checking: value.is_check_length, length_number: value.number_length },
             ]);
         });
     }
@@ -136,6 +140,16 @@ const LeadCreateScreen = ({ props, navigation }) => {
     const onPhoneNumberChange = (phone) => {
         setPhoneNumber(phone);
     };
+
+    const onPhoneNumberSubmit = () => {
+        if (checkingRule.is_checking) {
+            if (phoneNumber.length != checkingRule.length_number) {
+                setPhoneNumber("");
+                Alert.alert("Invalid Input", `Please input ${checkingRule?.length_number} digits of number`);
+                return;
+            }
+        }
+    }
 
     const onEmailChange = (email) => {
         setEmail(email);
@@ -408,7 +422,11 @@ const LeadCreateScreen = ({ props, navigation }) => {
                                     required={true}
                                     selectedValue={country_code}
                                     options={countryCodes}
-                                    onSelect={(value) => setCountryCode(value)}
+                                    onSelect={(value, index) => {
+                                        setCountryCode(value);
+                                        setCheckingRule(countryCodes[index - 1]);
+                                        setPhoneNumber("");
+                                    }}
                                 />
                             </View>
                             <View style={{ width: '69%' }}>
@@ -419,6 +437,7 @@ const LeadCreateScreen = ({ props, navigation }) => {
                                     label="Contact Number"
                                     keyboardType="phone-pad"
                                     value={phoneNumber}
+                                    onEndEditing={onPhoneNumberSubmit}
                                     onChange={(phone) => onPhoneNumberChange(phone)}
                                 />
                             </View>
@@ -464,18 +483,6 @@ const LeadCreateScreen = ({ props, navigation }) => {
                                 />
                             )
                         }
-
-                        {/* {
-                        (normalSource == "Referral") &&
-                        (
-                            <LongText
-                                multiline={true}
-                                onChange={(data) => {
-                                    setNormalNotes(data);
-                                }}
-                            />
-                        )
-                    } */}
 
                         {
                             store.getState().loginReducer.scopes.includes('lead-assign') &&

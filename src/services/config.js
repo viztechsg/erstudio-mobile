@@ -70,6 +70,18 @@ export const getVendorSource = () => {
     .catch(err => console.log(err));
 }
 
+export function getVendorSow(sow_id) {
+    return api.get(`/get-vendor-sow/${sow_id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data.data;
+        })
+        .catch(err => console.log(err.response));
+}
+
 export const getSowSource = () => {
     return api.get('/get-sow-source', {
         headers: {
@@ -105,6 +117,27 @@ export const getAreaSource = () => {
 
 export const getSoiSource = () => {
     return api.get('/get-inspection-list', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getNeedAttention = () => {
+    return api.get('/get-need-action', {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => {return response.data.message})
+    .catch(err => console.log(err));
+}
+
+export const getCompanyTerms = () => {
+    return api.get('/get-company-terms}', {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
