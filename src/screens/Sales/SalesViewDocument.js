@@ -35,7 +35,7 @@ const SalesViewDocument = ({ navigation }) => {
     useEffect(() => {
         setRefreshing(true);
         getQuotationUrl(item.id).then(data => { setRefreshing(false); setFixedURI(data); _handlePressButtonAsync(data) });
-        getCompanyTerms().then((htmlContent) => {
+        getCompanyTerms(item.company_id,project_data.property_type_id).then((htmlContent) => {
             var content = "";
             htmlContent.data.map((item,index) => {
                 content += item.content;

@@ -136,8 +136,8 @@ export const getNeedAttention = () => {
     .catch(err => console.log(err));
 }
 
-export const getCompanyTerms = () => {
-    return api.get('/get-company-terms}', {
+export const getCompanyTerms = (company_id,property_type_id) => {
+    return api.get(`/get-company-terms/${company_id}/${property_type_id}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }

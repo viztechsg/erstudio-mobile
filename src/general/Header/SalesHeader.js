@@ -10,6 +10,8 @@ import { approveSI, rejectSI } from '../../services/supplierInvoice';
 import { store } from '../../store/store';
 import { RadioButton } from 'react-native-paper';
 import LongText from '../../components/LongText';
+import TextField from '../../components/TextField';
+import { useEffect } from 'react';
 export const salesOption = ({ navigation }) => {
     return {
         headerLeft: () => (
@@ -425,7 +427,11 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
             const { item, project_data } = navigation.state.params;
             const [visible, setVisible] = useState(false);
             const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
+            const [partialApproveToggle, setPartialApproveToggle] = useState(false);
             const [CRValue, setCRValue] = useState('');
+            const [SIRemark, setSIRemark] = useState("");
+            const [approvedAmount, setApprovedAmount] = useState("");
+            const [percentAmount, setPercentAmount] = useState(100);
             const cancelReason = [
                 {
                     value: 'No Answer',
@@ -449,18 +455,43 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                 },
             ];
 
+            const sumApprovalLogs = () => {
+                var sum_value = 0;
+                item.approval_logs.map((value, index) => {
+                    sum_value = sum_value + parseInt(value.approved_amount);
+                });
+
+                return sum_value.toString();
+            }
+
+            const summedApprovalLogs = sumApprovalLogs();
+
             const CRToggle = () => {
                 setCancelReasonToggle(!cancelReasonToggle);
                 setCRValue('');
             };
+
+            const partialAppToggle = () => {
+                setPartialApproveToggle(!partialApproveToggle);
+            }
+
             const toggleOverlay = () => {
                 setVisible(!visible);
             };
 
             const approveQuo = quo_id => {
-                approveSI(quo_id).then(
-                    Alert.alert("Supplier invoice has been approved")
+                approveSI(quo_id,"full",SIRemark,item.amount).then(
+                    Alert.alert("Supplier invoice has been fully approved")
                 )
+                toggleOverlay();
+                navigation.navigate('SalesView', { item: project_data })
+            }
+
+            const approvePartial = si_id => {
+                approveSI(si_id,"partial",SIRemark,approvedAmount).then(
+                    Alert.alert("Supplier invoice has been approved partially")
+                )
+                partialAppToggle();
                 toggleOverlay();
                 navigation.navigate('SalesView', { item: project_data })
             }
@@ -481,7 +512,7 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                 toggleOverlay();
                 holdSI(si_id)
                     .then(
-                        Alert.alert('Hold Supplier Invoice', 'Supplier Invoice has been rejected')
+                        Alert.alert('Hold Supplier Invoice', 'Supplier Invoice has been holded')
                     )
                     .then(
                         navigation.navigate('SalesView', { item: project_data })
@@ -506,20 +537,43 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                                 }>
                                 Cancel reason
                             </Text>
-                            {/* {cancelReason.map((item, index) => {
-                                return (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <RadioButton.Android
-                                            value={item.value}
-                                            status={CRValue == item.value ? 'checked' : 'unchecked'}
-                                            onPress={() => setCRValue(item.value)}
-                                        />
-                                        <Text style={{ fontSize: 14 }}>{item.value}</Text>
-                                    </View>
-                                );
-                            })} */}
                             <LongText value={CRValue} onChange={(remark) => setCRValue(remark)} />
                             <DefaultButton onPress={() => onReject(item.id)} textButton="SAVE CHANGES" />
+                        </View>
+                    </Overlay>
+                    {/* OVERLAY PARTIAL APPROVE */}
+                    <Overlay
+                        key="PARTIAL_APPROVE"
+                        isVisible={partialApproveToggle}
+                        onBackdropPress={partialAppToggle}
+                        overlayStyle={{ width: '80%', height: Dimensions.height, marginBottom: Platform.OS == 'ios' ? 250 : 0 }}
+                    >
+                        <View>
+                            <Text
+                                style={
+                                    {
+                                        color: 'grey', fontWeight: '800', fontSize: 18, fontSize: 16,
+                                        fontWeight: 'bold'
+                                    }
+                                }>
+                                Fill Amount
+                            </Text>
+                            <TextField label="Supplier Invoice Amount" editable={false} value={item.amount} />
+                            <TextField label="Approved Amount" editable={false} value={summedApprovalLogs} />
+                            <TextField label="Percentage" keyboardType="number-pad" value={percentAmount} onChange={(value) => {
+                                setPercentAmount(value);
+                                var app_amount = item.amount * (value/100);
+                                setApprovedAmount(app_amount.toString());
+                                }}
+                                />
+                                
+                            <TextField label="Amount" required={true} keyboardType="number-pad" value={approvedAmount} onChange={(value) => {
+                                setApprovedAmount(value);
+                                var percent = (value/item.amount)*100;
+                                setPercentAmount(percent.toString());
+                            }} />
+                            <LongText label="Remark" value={SIRemark} onChange={(remark) => setSIRemark(remark)} />
+                            <DefaultButton onPress={() => approvePartial(item.id)} textButton="SAVE CHANGES" />
                         </View>
                     </Overlay>
                     <Overlay isVisible={visible} onBackdropPress={toggleOverlay} >
@@ -528,7 +582,7 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                                 (
                                     <View>
                                         {
-                                            item.status == "Waiting Approval" && <Text>You don't have access to approve this document</Text>
+                                            item.status == "Pending" && <Text>You don't have access to approve this document</Text>
                                         }
 
                                         {
@@ -546,7 +600,7 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                                 (
                                     <View>
                                         {
-                                            item.status == "Waiting Approval" && <Text>Are you sure want to approve this Supplier Invoice?</Text>
+                                            (item.status == "Pending" || item.status == "Approved (Partial)") && <Text>Are you sure want to approve this Supplier Invoice?</Text>
                                         }
 
                                         {
@@ -562,13 +616,17 @@ export const salesViewSIDocumentOption = ({ navigation }) => {
                                         }
 
                                         {
-                                            (item.status == "Waiting Approval" || item.status == "On Hold") && <DefaultButton textButton="YES" onPress={() => approveQuo(item.id)} />
+                                            (item.status == "Pending" || item.status == "On Hold") && <DefaultButton textButton="APPROVE (FULL)" onPress={() => approveQuo(item.id)} />
+                                        }
+
+                                        {
+                                            (item.status == "Pending" || item.status == "On Hold" || item.status == "Approved (Partial)") && <DefaultButton textButton="APPROVE (Partial)" onPress={partialAppToggle} />
                                         }
                                         {
-                                            item.status == "Waiting Approval" && <DefaultButton textButton="ON HOLD" onPress={() => holdSI(item.id)} />
+                                            item.status == "Pending" && <DefaultButton textButton="ON HOLD" onPress={() => holdSI(item.id)} />
                                         }
                                         {
-                                            (item.status == "Waiting Approval" || item.status == "On Hold") && <DefaultButton textButton="REJECT" onPress={CRToggle} />
+                                            (item.status == "Pending" || item.status == "On Hold") && <DefaultButton textButton="REJECT" onPress={CRToggle} />
                                         }
                                     </View>)
                         }

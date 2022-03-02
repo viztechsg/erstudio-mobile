@@ -42,12 +42,13 @@ const SalesViewScreen = ({ navigation }) => {
 
     const SECTIONS = [
         {
-            title: 'Quotation/Agreement',
+            title: 'Project Document',
             content: (
                 <View>
+                    {/* QUO/AGREE */}
                     {
                         projectData &&
-                        projectData?.lead?.quotations.map((item, index) => {
+                        projectData?.quotations?.map((item, index) => {
                             if (item.status != "draft") {
                                 return (
                                     <View>
@@ -76,6 +77,7 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
+                    {/* QUO/AGREE UPLOADED */}
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
                             if (item.category == "Quotation" || item.category == "Agreement") {
@@ -91,16 +93,10 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
-                </View>
-            ),
-        },
-        {
-            title: 'Variation Order',
-            content: (
-                <View>
+                    {/* VO */}
                     {
                         projectData &&
-                        projectData?.lead?.variation_orders?.map((item, index) => {
+                        projectData?.variation_orders?.map((item, index) => {
                             return (
                                 <View>
                                     <VariationOrder
@@ -129,13 +125,26 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
+                    
                 </View>
             ),
         },
         {
-            title: 'Completion Certificate',
+            title: 'Correspondence',
             content: (
                 <View>
+                    {projectData &&
+                        projectData?.documents?.map((item, index) => {
+                            if (item.category == "Supplier PO") {
+                                return <GeneralDocument
+                                    item={item}
+                                    key={++index}
+                                    onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                />
+                            }
+                        })
+                    }
+                    {/* Certificate of Completion */}
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
                             if (item.category == "Completion Certificate") {
@@ -151,13 +160,7 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
-                </View>
-            ),
-        },
-        {
-            title: 'Handover Checklist',
-            content: (
-                <View>
+                    {/* HANDOVER */}
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
                             if (item.category == "Handover Checklist") {
@@ -169,13 +172,7 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
-                </View>
-            ),
-        },
-        {
-            title: 'Customer Invoice',
-            content: (
-                <View>
+                    {/* Customer Invoice */}
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
                             if (item.category == "Customer Invoice") {
@@ -187,21 +184,18 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
-                </View>
-            ),
-        },
-        {
-            title: 'Supplier PO',
-            content: (
-                <View>
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
-                            if (item.category == "Supplier PO") {
-                                return <GeneralDocument
-                                    item={item}
-                                    key={++index}
-                                    onViewPress={() => viewGeneralDoc(item.attachment_path)}
-                                />
+                            if (item.category == "Others") {
+                                return (
+                                    <View>
+                                        <GeneralDocument
+                                            item={item}
+                                            key={++index}
+                                            onViewPress={() => viewGeneralDoc(item.attachment_path)}
+                                        />
+                                    </View>
+                                )
                             }
                         })
                     }
@@ -260,7 +254,7 @@ const SalesViewScreen = ({ navigation }) => {
 
     const initData = () => {
         getSingleProject(item.id).then((data) => {
-            console.log(data.documents);
+            console.log(data.quotations);
             setProjectData(data)
             setRemarks([]);
             rebuildRemarkObject(data.remarks);

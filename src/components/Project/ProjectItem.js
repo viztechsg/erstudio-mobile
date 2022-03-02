@@ -19,6 +19,9 @@ const ProjectItem = props => {
                     <Text style={{ color: 'black', fontSize: 12 }}>
                         {props.item.project_no}
                     </Text>
+                    <Text style={{ color: 'black', fontSize: 12 }}>
+                        {props.item.name}
+                    </Text>
                     <Text style={{ color: 'black', fontSize: 16, marginTop: 10 }}>
                         {props.item.client_name}
                     </Text>

@@ -1,9 +1,11 @@
 import api from '../api/api';
 import { store } from '../store/store';
 
-export function approveSI(quo_id) {
-    return api.put(`/supplier-invoice/${quo_id}/approve`, {
-        type: "approve"
+export function approveSI(quo_id,type,remarks,approved_amount) {
+    return api.put(`/supplier-invoice/${quo_id}/${type}/approve`, {
+        type: "approve",
+        approved_amount,
+        remarks
     }, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`

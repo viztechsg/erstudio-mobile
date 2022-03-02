@@ -70,12 +70,13 @@ const LeadItem = (props) => {
                         <View
                             style={{
                                 alignItems: 'flex-start',
-                                width: '35%',
+                                width: '40%',
                             }}>
                             <Text
                                 style={{
                                     color: 'black',
                                     fontSize: 14,
+                                    marginTop: 8
                                 }}>
                                 {props.item.property_type.name}
                             </Text>
