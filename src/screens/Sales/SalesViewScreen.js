@@ -22,6 +22,8 @@ import Agreement from '../../components/Sales/Agreement';
 import VariationOrder from '../../components/Sales/VariationOrder';
 import GeneralDocument from '../../components/Sales/GeneralDocument';
 import * as WebBrowser from 'expo-web-browser';
+import Invoice from '../../components/Sales/Invoice';
+import Handover from '../../components/Sales/Handover';
 const SalesViewScreen = ({ navigation }) => {
     const { item } = navigation.state.params;
 
@@ -60,17 +62,14 @@ const SalesViewScreen = ({ navigation }) => {
                                             )}
                                         />
                                         {
-                                            item?.agreement.map((agr, i) => {
-                                                if (agr.status != "draft") {
-                                                    return <Agreement
-                                                        item={agr}
-                                                        key={++i}
-                                                        onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
-                                                            { item: agr, type: 'Agreement', uri: "need-fetch", project_data: projectData }
-                                                        )}
-                                                    />
-                                                }
-                                            })
+                                            (item.agreement && item.agreement.status != "draft") &&
+                                            (<Agreement
+                                                item={item.agreement}
+                                                key={++i}
+                                                onViewPress={() => navigation.navigate('SalesViewAgreementDocument',
+                                                    { item: item.agreement, type: 'Agreement', uri: "need-fetch", project_data: projectData }
+                                                )}
+                                            />)
                                         }
                                     </View>
                                 )
@@ -125,7 +124,29 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
-                    
+                    {projectData &&
+                        projectData?.handover && (
+                            <Handover
+                                item={projectData?.handover}
+                                runningNo={projectData?.project_no}
+                                key={'HANDOVER_' + projectData?.handover.id}
+                                onViewPress={() => navigation.navigate('SalesViewHandover',
+                                    { item: projectData?.handover, type: 'HANDOVER', uri: "need-fetch", project_data: projectData }
+                                )}
+                            />
+                        )
+                    }
+                    {projectData &&
+                        projectData?.invoice && (
+                            <Invoice
+                                item={projectData?.invoice}
+                                key={'CI_' + projectData?.invoice.id}
+                                onViewPress={() => navigation.navigate('SalesViewInvoice',
+                                    { item: projectData?.invoice, type: 'CI', uri: "need-fetch", project_data: projectData }
+                                )}
+                            />
+                        )
+                    }
                 </View>
             ),
         },
@@ -184,6 +205,7 @@ const SalesViewScreen = ({ navigation }) => {
                             }
                         })
                     }
+
                     {projectData &&
                         projectData?.documents?.map((item, index) => {
                             if (item.category == "Others") {
@@ -279,8 +301,8 @@ const SalesViewScreen = ({ navigation }) => {
 
     const _renderContent = section => {
         return (
-            <View style={{ backgroundColor: 'white', padding: 10 }}>
-                <Text>{section.content}</Text>
+            <View style={{ backgroundColor: 'white', padding: 10, width: '100%' }}>
+                <View>{section.content}</View>
             </View>
         );
     };
@@ -344,7 +366,7 @@ const SalesViewScreen = ({ navigation }) => {
                         </View>
                         <View style={{ width: '50%', justifyContent: 'center', alignItems: 'flex-start' }}>
                             <Text style={styles.label}>Assigned To</Text>
-                            <Text style={{ fontSize: 14 }}>{item.lead.direct_salesman?.name}</Text>
+                            <Text style={{ fontSize: 14 }}>{item.designer?.name}</Text>
                         </View>
                     </View>
                     <View style={styles.row}>

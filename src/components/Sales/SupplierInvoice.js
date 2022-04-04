@@ -10,14 +10,17 @@ import {
 import { Card, Badge } from 'react-native-elements';
 import moment from 'moment';
 import { useEffect } from "react";
+import { Platform } from "react-native";
+import { Dimensions } from "react-native";
 const SupplierInvoice = props => {
-
+    useEffect(() => {
+    }, [props.item.id])
     return (
         
         <TouchableOpacity onPress={() => props.onViewPress() }>
             <View style={styles.wrapper}>
                 <View style={styles.col_1}>
-                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.supplier.vendor_name}</Text>
+                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.supplier?.vendor_name}</Text>
                 </View>
                 <View style={styles.col_2}>
                     <Text style={{fontSize:10, justifyContent:'center'}}>{props.item.status}</Text>
@@ -33,23 +36,24 @@ const SupplierInvoice = props => {
 const styles = StyleSheet.create({
     wrapper: {
         backgroundColor: 'white',
+        alignSelf:'stretch',
         padding: 10,
         flexDirection: 'row',
         margin: 1,
-        alignSelf:'stretch',
+        flexWrap:'wrap',
     },
     col_1: {
         alignItems: 'flex-start',
-        width:'70%'
+        width: Platform.OS === "ios" ? '30%' : '33%'
     },
     col_2: {
         alignItems: 'center',
-        width:'50%'
+        width:Platform.OS === "ios" ? '30%' : '33%'
         // paddingRight: 10
     },
     col_3: {
         alignItems: 'flex-end',
-        width:'50%'
+        width:Platform.OS === "ios" ? '40%' : '33%'
         // paddingRight: 10
     }
 });

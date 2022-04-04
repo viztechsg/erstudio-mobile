@@ -89,3 +89,29 @@ export function getVaritaionOrderUrl(vo_id) {
         })
         .catch(err => console.log(err.response));
 }
+
+export function signHandover(id,customer_sign) {
+    return api.put(`/sign-handover/${id}`, {
+        customer_sign
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            console.log(response.data)
+        })
+        .catch(err => console.log(err.response));
+}
+
+export function getHandoverUrl(id) {
+    return api.get(`/handover-view/${id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data.url;
+        })
+        .catch(err => console.log(err.response));
+}

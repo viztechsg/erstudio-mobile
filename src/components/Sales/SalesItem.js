@@ -27,8 +27,8 @@ const SalesItem = props => {
     // }
     else if (props.item.quotations.length > 0) {
         props.item.quotations.map((item, index) => {
-            if (item.agreement?.length > 0 && !props.item.lead.handover) {
-                if (item.agreement[item.agreement.length - 1].status == "requested" && item.agreement[item.agreement.length - 1].status != "declined") {
+            if (item.agreement && !props.item.lead.handover) {
+                if (item.agreement.status == "requested" && item.agreement.status != "declined") {
                     icon = 'error-outline'
                     // iconColor = 'green'
                     // iconProvider = 'icon1'

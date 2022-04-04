@@ -50,6 +50,11 @@ import SalesViewSIDocument from './src/screens/Sales/SalesViewSIDocument';
 import SalesViewAgreementDocument from './src/screens/Sales/SalesViewAgreementDocument';
 import SalesSignAgreement from './src/screens/Sales/SalesSignAgreement';
 import SalesViewVO from './src/screens/Sales/SalesViewVO';
+import SalesSignVO from './src/screens/Sales/SalesSignVO';
+import SalesViewInvoice from './src/screens/Sales/SalesViewInvoice';
+import SalesSignInvoice from './src/screens/Sales/SalesSignInvoice';
+import SalesViewHandover from './src/screens/Sales/SalesViewHandover';
+import SalesSignHandover from './src/screens/Sales/SalesSignHandover';
 
 const authNavigator = createStackNavigator(
   {
@@ -163,6 +168,26 @@ const SalesStack = createStackNavigator(
     },
     SalesViewVO:{
       screen: SalesViewVO,
+      navigationOptions: salesViewVODocumentOption
+    },
+    SalesSignVO:{
+      screen: SalesSignVO,
+      navigationOptions: salesViewVODocumentOption
+    },
+    SalesViewInvoice:{
+      screen: SalesViewInvoice,
+      navigationOptions: salesViewVODocumentOption
+    },
+    SalesSignInvoice:{
+      screen: SalesSignInvoice,
+      navigationOptions: salesViewVODocumentOption
+    },
+    SalesViewHandover:{
+      screen: SalesViewHandover,
+      navigationOptions: salesViewVODocumentOption
+    },
+    SalesSignHandover:{
+      screen: SalesSignHandover,
       navigationOptions: salesViewVODocumentOption
     },
     SalesViewAgreementDocument:{
