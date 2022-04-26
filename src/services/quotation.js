@@ -9,7 +9,7 @@ export function getQuotationUrl(quo_id) {
         .then(response => {
             return response.data.url;
         })
-        .catch(err => console.log(err));
+        .catch(err => console.log(err.response));
 }
 
 export function approveQuotation(quo_id) {

@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     },
     col_1: {
         alignItems: 'flex-start',
-        width:'100%'
+        width:'50%'
     },
     col_2: {
         alignItems: 'flex-end',

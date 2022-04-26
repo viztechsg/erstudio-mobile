@@ -164,7 +164,7 @@ const SalesListScreen = ({navigation}) => {
             </Overlay>
             <View style={{ flexDirection: 'row' }}>
                 <View style={{ width: '50%', justifyContent: 'flex-start' }}>
-                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({salesData.length})</Text>
+                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({salesData?.length})</Text>
                 </View>
                 <View style={{ width: '50%', justifyContent: 'flex-end' }}>
                     <TouchableOpacity style={{ backgroundColor: 'white', width: 150, height: 40, alignSelf: 'flex-end', justifyContent: 'center' }} onPress={toggleOverlay}>

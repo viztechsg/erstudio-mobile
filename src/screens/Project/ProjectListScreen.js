@@ -8,9 +8,9 @@ import Swipeout from "react-native-swipeout";
 import Icon from 'react-native-vector-icons/AntDesign';
 import SwipeoutButton from '../../components/SwipeoutButton';
 
-import {useDispatch, connect} from 'react-redux';
-import {getLeadData, deleteLead} from '../../actions/leadAction';
-import {store} from '../../store/store';
+import { useDispatch, connect } from 'react-redux';
+import { getLeadData, deleteLead } from '../../actions/leadAction';
+import { store } from '../../store/store';
 import ProjectItem from '../../components/Project/ProjectItem';
 import { getSalesData } from '../../actions/salesAction';
 import { RefreshControl } from 'react-native';
@@ -22,6 +22,7 @@ const ProjectListScreen = (props) => {
     const [visible, setVisible] = useState(false);
     const [selectedValue, setSelectedValue] = useState("java");
     const [defaultLabel, setDefaultLabel] = useState("Start Date");
+    const [filteredProject, setFilteredProject] = useState([]);
 
     const [date, setDate] = useState(new Date(1598051730000));
     const [mode, setMode] = useState('date');
@@ -67,6 +68,7 @@ const ProjectListScreen = (props) => {
 
     store.subscribe(() => {
         setSalesData(store.getState().salesReducer.data);
+        filterData(store.getState().salesReducer.data);
     });
 
     const onRefresh = useCallback(() => {
@@ -74,9 +76,28 @@ const ProjectListScreen = (props) => {
         dispatch(getSalesData());
         wait(3000).then(() => setRefreshing(false))
     }, [refreshing]);
-    
 
-    const leadDeletePress = id =>{
+    const validateProject = (project_no) => {
+        var objRegExp = /L-\d{5}/;
+        if (objRegExp.test(project_no)) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    const filterData = (data) => {
+        var filteredData = data.filter((value, index) => {
+            var result = validateProject(value.project_no);
+            return result;
+        });
+        // console.log(filteredData.length);
+        setFilteredProject(filteredData);
+    }
+
+
+    const leadDeletePress = id => {
         Alert.alert(
             "Delete Lead",
             "Are you sure want to delete this lead?",
@@ -86,15 +107,22 @@ const ProjectListScreen = (props) => {
                     onPress: () => console.log(id),
                     style: "cancel"
                 },
-                { text: "OK", onPress: () => {
-                    dispatch(deleteLead(id))
-                    dispatch(getLeadData())
+                {
+                    text: "OK", onPress: () => {
+                        dispatch(deleteLead(id))
+                        dispatch(getLeadData())
+                    }
                 }
-            }
             ],
             { cancelable: true }
         );
     }
+
+
+
+
+    const renderListItem = ({ item }) =>
+        (<ProjectItem item={item} status="follow" onViewPress={() => navigation.navigate('ProjectView', { item: item })} />);
 
 
     return (
@@ -186,7 +214,7 @@ const ProjectListScreen = (props) => {
             </Overlay>
             <View style={{ flexDirection: 'row' }}>
                 <View style={{ width: '50%', justifyContent: 'flex-start' }}>
-                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({salesData.length})</Text>
+                    <Text style={{ color: 'grey', fontSize: 20 }}>Projects Table ({filteredProject.length})</Text>
                 </View>
                 <View style={{ width: '50%', justifyContent: 'flex-end' }}>
                     <TouchableOpacity style={{ backgroundColor: 'white', width: 150, height: 40, alignSelf: 'flex-end', justifyContent: 'center' }} onPress={toggleOverlay}>
@@ -202,12 +230,8 @@ const ProjectListScreen = (props) => {
                             onRefresh={onRefresh}
                         />}
                     keyExtractor={item => item.id.toString()}
-                    data={salesData}
-                    renderItem={({ item }) => {
-                        return (
-                                <ProjectItem item={item} status="follow" onViewPress={() => navigation.navigate('ProjectView',{ item: item })} />
-                        )
-                    }}
+                    data={filteredProject}
+                    renderItem={renderListItem}
                 />
             </View>
         </View>

@@ -51,7 +51,6 @@ const SelectPicker = props => {
                     }
                 </Picker> */}
                 <RNPickerSelect
-                    key={Math.random()}
                     style={pickerSelectStyles}
                     value={props.selectedValue}
                     onValueChange={(value, index) => { setSelectedValue(value); props.onSelect(value,index) }}
@@ -95,6 +94,7 @@ const pickerSelectStyles = StyleSheet.create({
         borderColor: 'gray',
         borderRadius: 4,
         color: 'black',
+        height:40,
         paddingRight: 30, // to ensure the text is never behind the icon
     },
     inputAndroid: {
@@ -105,6 +105,7 @@ const pickerSelectStyles = StyleSheet.create({
         borderColor: 'purple',
         borderRadius: 8,
         color: 'black',
+        height:40,
         paddingRight: 30, // to ensure the text is never behind the icon
         elevation: 3
     },

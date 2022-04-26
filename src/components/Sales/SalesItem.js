@@ -18,17 +18,17 @@ const SalesItem = props => {
     let icon = '';
     let iconColor = 'orange'
 
-    if (props.item.lead.quotations.length < 1 && props.item.lead.quotations.customer_sign == null) {
+    if (props.item.quotations.length < 1 && props.item.quotations.customer_sign == null) {
         icon = 'error-outline'
     }
     // else if(props.item.lead.quotations.length > 0 && props.item.lead.quotations.customer_sign == null)
     // {
     //     icon = 'error-outline'
     // }
-    else if (props.item.lead.quotations.length > 0) {
-        props.item.lead.quotations.map((item, index) => {
-            if (item.agreement?.length > 0 && !props.item.lead.handover) {
-                if (item.agreement[item.agreement.length - 1].status == "requested" && item.agreement[item.agreement.length - 1].status != "declined") {
+    else if (props.item.quotations.length > 0) {
+        props.item.quotations.map((item, index) => {
+            if (item.agreement && !props.item.handover) {
+                if (item.agreement.status == "requested" && item.agreement.status != "declined") {
                     icon = 'error-outline'
                     // iconColor = 'green'
                     // iconProvider = 'icon1'
@@ -42,11 +42,21 @@ const SalesItem = props => {
                 }
 
             }
-            else if (props.item.lead.handover?.length > 0) {
-                icon = 'checkcircleo'
-                iconColor = 'green'
-                iconProvider = 'icon2'
-                textLabel = "Handover"
+            else if (props.item.handover) {
+                if(props.item.handover.client_sign != null)
+                {
+                    icon = 'checkcircleo'
+                    iconColor = 'green'
+                    iconProvider = 'icon2'
+                    textLabel = "Handover"
+                }
+                else{
+                    icon = 'error-outline'
+                    iconColor = 'orange'
+                    iconProvider = 'icon1'
+                    textLabel = "Handover"
+                }
+
             }
             else if(item.status != "approved" && item.status != "declined")
             {
@@ -76,7 +86,10 @@ const SalesItem = props => {
                     <Text style={{ color: 'black', fontSize: 12 }}>
                         {props.item.project_no}
                     </Text>
-                    <Text style={{ color: 'black', fontSize: 16, marginTop: 10 }}>
+                    <Text style={{ color: 'black', fontSize: 12 }}>
+                        {props.item.name}
+                    </Text>
+                    <Text style={{ color: 'black', fontSize: 16, marginTop: 5 }}>
                         {props.item.client_name}
                     </Text>
                     <View style={{ flexDirection: 'row', marginTop: 5, width: '100%', }}>
@@ -121,7 +134,7 @@ const SalesItem = props => {
 const styles = StyleSheet.create({
     wrapper: {
         backgroundColor: 'white',
-        height: 100,
+        // height: 100,
         padding: 10,
         flexDirection: 'row',
         margin: 1

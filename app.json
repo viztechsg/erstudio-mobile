@@ -33,7 +33,8 @@
         "WRITE_CALENDAR",
         "REMINDERS",
         "CAMERA",
-        "CAMERA_ROLL"
+        "CAMERA_ROLL",
+        "READ_CONTACTS"
       ]
     },
     "web": {

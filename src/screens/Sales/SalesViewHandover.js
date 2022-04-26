@@ -1,23 +1,17 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Dimensions, View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useState } from 'react';
-import { getQuotationUrl } from '../../services/quotation';
-import { useCallback } from 'react';
-// import {salesViewDocumentOption} from '../../general/Header/SalesHeader';
-// import Pdf from 'react-native-pdf';
 import LoadingState from '../../components/LoadingState';
-import { getVaritaionOrderUrl } from '../../services/sales';
 import * as WebBrowser from 'expo-web-browser';
 import RenderHTML from 'react-native-render-html';
-import { Button } from 'native-base';
 import { getCompanyTerms } from '../../services/config';
 import DefaultButton from '../../components/DefaultButton';
 import { Badge, Overlay } from 'react-native-elements';
 import { useWindowDimensions } from 'react-native';
-
-const SalesViewVO = ({ navigation }) => {
+import { getHandoverUrl } from '../../services/sales';
+import { Button } from 'native-base';
+const SalesViewHandover = ({ navigation }) => {
     const { item, type, uri, project_data } = navigation.state.params;
     const [fixedURI, setFixedURI] = useState(uri);
     const [refreshing, setRefreshing] = useState(false);
@@ -34,7 +28,7 @@ const SalesViewVO = ({ navigation }) => {
 
     useEffect(() => {
         setRefreshing(true);
-        getVaritaionOrderUrl(item.id).then(data => { setRefreshing(false); setFixedURI(data); _handlePressButtonAsync(data) });
+        getHandoverUrl(item.id).then(data => { setRefreshing(false); setFixedURI(data); _handlePressButtonAsync(data) });
         getCompanyTerms(project_data.company_id, project_data.property_type_id).then((htmlContent) => {
             var content = "";
             htmlContent?.data?.map((item, index) => {
@@ -58,19 +52,19 @@ const SalesViewVO = ({ navigation }) => {
             <Overlay
                 isVisible={showTnc}
                 onBackdropPress={toggleOverlay}
-                overlayStyle={{ width: '80%', height: 400 }}>
+                overlayStyle={{ width: '80%', maxHeight: 400 }}>
                 <ScrollView>
                     <RenderHTML
                         source={{ html: htmlContent }}
                         contentWidth={width}
                     />
-                    <DefaultButton textButton="SIGN" onPress={() => { navigation.navigate('SalesSignVO', { id: item.id, item: project_data }) }} />
+                    <DefaultButton textButton="SIGN" onPress={() => { navigation.navigate('SalesSignHandover', { id: item.id, item: project_data }) }} />
                 </ScrollView>
             </Overlay>
             <LoadingState isUploading={refreshing} content="Preparing document.." />
             <View style={{ padding: 20, backgroundColor: '#202020', flexDirection: 'row', height: 120 }}>
                 <View style={{ width: '80%' }}>
-                    <Text style={{ color: 'white', fontSize: 16 }}>Variation Order: {item.running_no}</Text>
+                    <Text style={{ color: 'white', fontSize: 16 }}>Handover: {project_data.project_no}</Text>
                     {
                         (item.client_sign == null) ?
                             <Text style={{ color: 'white', fontSize: 12 }}>
@@ -124,4 +118,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default SalesViewVO;
+export default SalesViewHandover;

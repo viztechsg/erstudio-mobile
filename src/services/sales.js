@@ -30,16 +30,19 @@ export function getSingleProject(project_id) {
 }
 
 export function addProjectWorkSchedule(data) {
-    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work, sow_id } = data;
+    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work, sow_id, vendor_free_text, vendor_contact,remark } = data;
     return api.post('/work-schedules',
         {
             project_id,
-            vendor_id,
+            vendor_id: vendor_id ? vendor_id : null,
             venue,
+            vendor_free_text: vendor_free_text ? vendor_free_text : null,
+            vendor_contact,
             scope_of_work,
             start_date,
             end_date,
-            sow_id
+            sow_id,
+            remark
         },
         {
             headers: {
@@ -80,6 +83,32 @@ export function addProjectRemark(data) {
 
 export function getVaritaionOrderUrl(vo_id) {
     return api.get(`/variation-order-view/${vo_id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            return response.data.url;
+        })
+        .catch(err => console.log(err.response));
+}
+
+export function signHandover(id,customer_sign) {
+    return api.put(`/sign-handover/${id}`, {
+        customer_sign
+    }, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    })
+        .then(response => {
+            console.log(response.data)
+        })
+        .catch(err => console.log(err.response));
+}
+
+export function getHandoverUrl(id) {
+    return api.get(`/handover-view/${id}`, {
         headers: {
             Authorization: `Bearer ${store.getState().loginReducer.token}`
         }
