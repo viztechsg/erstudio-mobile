@@ -27,7 +27,7 @@ const SalesItem = props => {
     // }
     else if (props.item.quotations.length > 0) {
         props.item.quotations.map((item, index) => {
-            if (item.agreement && !props.item.lead.handover) {
+            if (item.agreement && !props.item.handover) {
                 if (item.agreement.status == "requested" && item.agreement.status != "declined") {
                     icon = 'error-outline'
                     // iconColor = 'green'
@@ -42,11 +42,21 @@ const SalesItem = props => {
                 }
 
             }
-            else if (props.item.lead.handover?.length > 0) {
-                icon = 'checkcircleo'
-                iconColor = 'green'
-                iconProvider = 'icon2'
-                textLabel = "Handover"
+            else if (props.item.handover) {
+                if(props.item.handover.client_sign != null)
+                {
+                    icon = 'checkcircleo'
+                    iconColor = 'green'
+                    iconProvider = 'icon2'
+                    textLabel = "Handover"
+                }
+                else{
+                    icon = 'error-outline'
+                    iconColor = 'orange'
+                    iconProvider = 'icon1'
+                    textLabel = "Handover"
+                }
+
             }
             else if(item.status != "approved" && item.status != "declined")
             {

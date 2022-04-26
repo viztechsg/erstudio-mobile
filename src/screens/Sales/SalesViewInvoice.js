@@ -10,9 +10,7 @@ import DefaultButton from '../../components/DefaultButton';
 import { Badge, Overlay } from 'react-native-elements';
 import { useWindowDimensions } from 'react-native';
 import { getInvoiceUrl } from '../../services/invoice';
-const wait = (timeout) => {
-    return new Promise(resolve => setTimeout(resolve, timeout));
-}
+import { Button } from 'native-base';
 
 const SalesViewInvoice = ({ navigation }) => {
     const { item, type, uri, project_data } = navigation.state.params;
@@ -32,9 +30,9 @@ const SalesViewInvoice = ({ navigation }) => {
     useEffect(() => {
         setRefreshing(true);
         getInvoiceUrl(item.id).then(data => { setRefreshing(false); setFixedURI(data); _handlePressButtonAsync(data) });
-        getCompanyTerms(item.company_id, project_data.property_type_id).then((htmlContent) => {
+        getCompanyTerms(project_data.company_id, project_data.property_type_id).then((htmlContent) => {
             var content = "";
-            htmlContent.data.map((item, index) => {
+            htmlContent?.data?.map((item, index) => {
                 content += item.content;
             });
 
@@ -64,6 +62,7 @@ const SalesViewInvoice = ({ navigation }) => {
                     <DefaultButton textButton="SIGN" onPress={() => { navigation.navigate('SalesSignInvoice', { id: item.id, item: project_data }) }} />
                 </ScrollView>
             </Overlay>
+            <LoadingState isUploading={refreshing} content="Preparing document.." />
             <View style={{ padding: 20, backgroundColor: '#202020', flexDirection: 'row', height: 120 }}>
                 <View style={{ width: '80%' }}>
                     <Text style={{ color: 'white', fontSize: 16 }}>Customer Invoice: {item.running_no}</Text>
@@ -93,7 +92,7 @@ const SalesViewInvoice = ({ navigation }) => {
 
                 </View>
             </View>
-            <LoadingState isUploading={refreshing} content="Preparing document.." />
+            
             <View style={{ height: '100%', justifyContent: 'center', alignItems: 'center', marginTop: -80 }}>
                 <TouchableOpacity onPress={() => _handlePressButtonAsync(fixedURI)} style={{ borderRadius: 5, borderColor: 'black', borderWidth: 1, padding: 40, backgroundColor: '#f3f3f3' }}>
                     <Text style={{ textAlign: 'center' }}>View Document</Text>

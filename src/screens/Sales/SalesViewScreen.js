@@ -234,7 +234,7 @@ const SalesViewScreen = ({ navigation }) => {
                                 item={item}
                                 key={++index}
                                 onViewPress={() => navigation.navigate('SalesViewSIDocument',
-                                    { item: item, type: `Supplier Invoice : ${item.supplier?.vendor?.name}`, uri: item.attachment_path, project_data: projectData }
+                                    { item: item, type: `Supplier Invoice : ${item.supplier?.vendor?.name || "Vendor"}`, uri: item.attachment_path, project_data: projectData }
                                 )}
                             />
                         })

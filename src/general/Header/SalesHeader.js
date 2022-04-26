@@ -324,68 +324,7 @@ export const salesViewVODocumentOption = ({ navigation }) => {
         headerRight: props => {
             const { item, project_data } = navigation.state.params;
             const [visible, setVisible] = useState(false);
-            const [cancelReasonToggle, setCancelReasonToggle] = useState(false);
-            const [CRValue, setCRValue] = useState('');
-            const cancelReason = [
-                {
-                    value: 'No Answer',
-                    id: 'No Answer',
-                },
-                {
-                    value: 'Messages no reply',
-                    id: 'Messages no reply',
-                },
-                {
-                    value: 'Wrong number',
-                    id: 'Wrong number',
-                },
-                {
-                    value: 'Customer request call back',
-                    id: 'Customer request call back',
-                },
-                {
-                    value: 'Etc.',
-                    id: 'Etc.',
-                },
-            ];
 
-            const CRToggle = () => {
-                setCancelReasonToggle(!cancelReasonToggle);
-                setCRValue('');
-            };
-            const toggleOverlay = () => {
-                setVisible(!visible);
-            };
-
-            const approveQuo = quo_id => {
-                approveSI(quo_id).then(
-                    Alert.alert("Supplier invoice has been approved")
-                )
-                toggleOverlay();
-            }
-
-            const onReject = si_id => {
-                toggleOverlay();
-                CRToggle();
-                rejectSI(si_id, CRValue)
-                    .then(
-                        Alert.alert('Reject Supplier Invoice', 'Supplier Invoice has been rejected')
-                    )
-                    .then(
-                        navigation.navigate('SalesView', { item: project_data })
-                    )
-            }
-
-            const holdSI = si_id => {
-                toggleOverlay();
-                holdSI(si_id)
-                    .then(
-                        Alert.alert('Hold Supplier Invoice', 'Supplier Invoice has been rejected')
-                    )
-                    .then(
-                        navigation.navigate('SalesView', { item: project_data })
-                    )
-            }
             return (
                 <View style={{ flexDirection: 'row' }}>
                     {/* REMARK CANCEL REASON */}

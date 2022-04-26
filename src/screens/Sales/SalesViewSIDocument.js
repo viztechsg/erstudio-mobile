@@ -52,15 +52,18 @@ const SalesViewSIDocument = ({ navigation }) => {
         if (item.remarks && item.status != "Rejected") {
             remarks += item.remarks + "\n";
         }
-
-        if (item.approval_logs) {
-            item.approval_logs?.map((value, index) => {
-                if (value.remark != null) {
-                    remarks += value.remark + "\n"
-                }
-
-            });
+        else{
+            if (item.approval_logs) {
+                item.approval_logs?.map((value, index) => {
+                    if (value.remark != null) {
+                        remarks += value.remark + "\n"
+                    }
+    
+                });
+            }
         }
+
+
 
         if (item.reject_reason) {
             remarks += item.reject_reason + "\n";

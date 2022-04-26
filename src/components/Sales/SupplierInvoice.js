@@ -14,13 +14,14 @@ import { Platform } from "react-native";
 import { Dimensions } from "react-native";
 const SupplierInvoice = props => {
     useEffect(() => {
+        console.log(props.item);
     }, [props.item.id])
     return (
         
         <TouchableOpacity onPress={() => props.onViewPress() }>
             <View style={styles.wrapper}>
                 <View style={styles.col_1}>
-                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.supplier?.vendor_name}</Text>
+                    <Text style={{fontSize:16, color:'#57ADD2'}}>{props.item.supplier?.vendor_name || "Vendor"}</Text>
                 </View>
                 <View style={styles.col_2}>
                     <Text style={{fontSize:10, justifyContent:'center'}}>{props.item.status}</Text>
