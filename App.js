@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+import { RootSiblingParent } from 'react-native-root-siblings';
 import React, { Component } from 'react';
 import { TouchableOpacity, View, Text, Button } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
@@ -21,7 +22,7 @@ import SalesListScreen from './src/screens/Sales/SalesListScreen'
 //Custome Header
 import homeOption from './src/general/Header/HomeHeader';
 import { leadsEditOption, leadsOption, leadsViewOption } from './src/general/Header/LeadsHeader';
-import { salesOption, salesViewOption, salesViewDocumentOption, salesViewSIDocumentOption, salesViewAgreementDocumentOption,salesViewVODocumentOption } from './src/general/Header/SalesHeader';
+import { salesOption, salesViewOption, salesViewDocumentOption, salesViewSIDocumentOption, salesViewAgreementDocumentOption, salesViewVODocumentOption } from './src/general/Header/SalesHeader';
 import LeadEditScreen from './src/screens/Lead/LeadEditScreen';
 import LeadRemarkScreen from './src/screens/Lead/LeadRemarkScreen';
 import LeadViewScreen from './src/screens/Lead/LeadViewScreen';
@@ -90,7 +91,7 @@ const MarketingStack = createStackNavigator(
     List: {
       screen: LeadListScreen,
       navigationOptions: leadsOption,
-      params : {filterStatus : '', needAttention: ''}
+      params: { filterStatus: '', needAttention: '' }
     },
     LeadCreation: {
       screen: LeadCreateScreen,
@@ -162,35 +163,35 @@ const SalesStack = createStackNavigator(
       screen: SalesViewDocument,
       navigationOptions: salesViewDocumentOption
     },
-    SalesViewSIDocument:{
+    SalesViewSIDocument: {
       screen: SalesViewSIDocument,
       navigationOptions: salesViewSIDocumentOption
     },
-    SalesViewVO:{
+    SalesViewVO: {
       screen: SalesViewVO,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesSignVO:{
+    SalesSignVO: {
       screen: SalesSignVO,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesViewInvoice:{
+    SalesViewInvoice: {
       screen: SalesViewInvoice,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesSignInvoice:{
+    SalesSignInvoice: {
       screen: SalesSignInvoice,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesViewHandover:{
+    SalesViewHandover: {
       screen: SalesViewHandover,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesSignHandover:{
+    SalesSignHandover: {
       screen: SalesSignHandover,
       navigationOptions: salesViewVODocumentOption
     },
-    SalesViewAgreementDocument:{
+    SalesViewAgreementDocument: {
       screen: SalesViewAgreementDocument,
       navigationOptions: salesViewAgreementDocumentOption
     },
@@ -268,11 +269,11 @@ const ProjectStack = createStackNavigator(
       screen: ProjectProgressPhotoScreen,
       navigationOptions: projectProgressPhotosOption
     },
-    ProgressSinglePhoto:{
+    ProgressSinglePhoto: {
       screen: ProgressSinglePhotoScreen,
       navigationOptions: projectProgressSinglePhotoOption
     },
-    PhotoDetail:{
+    PhotoDetail: {
       screen: PhotoDetailScreen,
       navigationOptions: photoDetailOption
     },
@@ -399,6 +400,8 @@ const AppContainer = createAppContainer(mainNavigator);
 
 export default App = () => (
   <Provider store={store}>
-    <AppContainer />
+    <RootSiblingParent>
+      <AppContainer />
+    </RootSiblingParent>
   </Provider>
 );
