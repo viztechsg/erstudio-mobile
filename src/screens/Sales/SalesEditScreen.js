@@ -33,9 +33,9 @@ import { useDispatch } from 'react-redux'
 import { store } from '../../store/store'
 import { addLeadRemark, getPropertyType, getSourceLead } from '../../services/lead'
 import { createSalesProject, getSalesData, updateSalesProject } from '../../actions/salesAction'
-import { addProjectRemark, addProjectWorkSchedule, getSingleProject } from '../../services/sales'
+import { addProjectRemark, addProjectWorkSchedule, getSingleProject, sendWSWhatsappNotification } from '../../services/sales'
 import WorkSchedule from '../../components/Sales/WorkSchedule'
-import { getRemarkSource, getSowSource, getVendorSource, getVendorSow } from '../../services/config'
+import { getCategory, getRemarkSource, getSowSource, getVendorByCategory, getVendorSource, getVendorSow } from '../../services/config'
 import { RadioButton } from 'react-native-paper';
 import { getProjectVendorList } from '../../services/projectDefect';
 import * as Contacts from 'expo-contacts';
@@ -43,7 +43,11 @@ import { selectContactPhone } from 'react-native-select-contact';
 import { FlatList } from 'react-native'
 import ContactItem from '../../components/Sales/ContactItem';
 import LoadingState from '../../components/LoadingState';
-
+import {
+    getCountryCodeSource
+} from '../../services/config';
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-root-toast';
 const SalesEditScreen = ({ props, navigation }) => {
 
     const { item } = navigation.state.params;
@@ -56,6 +60,8 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [propertyTypeOption, setPropertyTypeOption] = useState([]);
 
     const [visible, setVisible] = useState(false);
+    const [countryCode, setCountryCodes] = useState("+65");
+    const [countryCodeOption, setCountryCodeOption] = useState([]);
 
     //SCHEDULE MODAL
     const [defaultLabel, setDefaultLabel] = useState("");
@@ -85,6 +91,8 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [vendorOption, setVendorOption] = useState([]);
     const [vendorContactOption, setVendorContactOption] = useState([]);
     const [tempContactOption, setTempContactOption] = useState([]);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+    const [categoryId, setCategoryId] = useState("");
 
     const [contactList, setContactList] = useState([]);
 
@@ -99,25 +107,28 @@ const SalesEditScreen = ({ props, navigation }) => {
     const [contactSearch, setContactSearch] = useState("");
     const [isFetchingContact, setIsFetchingContact] = useState(false);
     const [filteredContact, setFilteredContact] = useState([]);
+    const [isValidPhone, setIsValidPhone] = useState(true);
+
+    // WS Popup
+    const [WSToggle, setWSToggle] = useState(false);
+    const [WSContent, setWSContent] = useState([]);
+    const [WSid, setWSid] = useState("");
 
     const initVendor = () => {
         setVendor("");
-        if (sowId != "") {
-            getVendorSow(sowId).then((data) => {
+        if (categoryId != "") {
+            getVendorByCategory(categoryId).then((data) => {
                 setVendorOption([]);
-
-                data.map((value) => {
-                    if (value.vendor_id != null) {
+                data.data.map((value) => {
                         setVendorOption((oldValue) => [
                             ...oldValue,
-                            { label: value.vendor.name, value: value.vendor.id, key: value.vendor.name },
+                            { label: value.name, value: value.id, key: "vendor_"+value.name },
                         ]);
 
                         setTempContactOption((oldValue) => [
                             ...oldValue,
-                            { vendor_id: value.vendor.id, contact_number: value.vendor.contact_number },
+                            { vendor_id: value.id, contact_number: value.contact_number },
                         ]);
-                    }
                 });
             })
         }
@@ -136,7 +147,15 @@ const SalesEditScreen = ({ props, navigation }) => {
                 ]);
             });
         });
-
+        getCountryCodeSource().then((data) => {
+            setCountryCodeOption([]);
+            data.data.map((value) => {
+                setCountryCodeOption((oldValue) => [
+                    ...oldValue,
+                    { label: value.code, value: "+"+value.code, key: value.code },
+                ]);
+            });
+        });
         initVendor();
 
         getSowSource().then((data) => {
@@ -148,6 +167,17 @@ const SalesEditScreen = ({ props, navigation }) => {
                 ]);
             });
         });
+
+        getCategory().then((data) => {
+            setCategoryOptions([]);
+            data.data.map((value) => {
+                setCategoryOptions((oldValue) => [
+                    ...oldValue,
+                    { label: value.name, value: value.id, key: value.name },
+                ]);
+            });
+        });
+
     }, [item.id]);
 
     // REMARK
@@ -185,6 +215,10 @@ const SalesEditScreen = ({ props, navigation }) => {
 
     const toggleOverlay = () => {
         setVisible(!visible)
+    }
+
+    const toggleWSClick = () => {
+        setWSToggle(!WSToggle);
     }
 
     const toggleContact = () => {
@@ -272,6 +306,7 @@ const SalesEditScreen = ({ props, navigation }) => {
 
     const addWorkSchedule = () => {
         let finalSOW = scope_of_work;
+        let phoneNumber = vendorContact;
 
         if (scope_of_work == 'Other') {
             if (other_sow == '') {
@@ -298,8 +333,13 @@ const SalesEditScreen = ({ props, navigation }) => {
             return;
         }
 
-        if (scope_of_work == "") {
-            Alert.alert("Invalid Input", "Please select scope of work");
+        // if (scope_of_work == "") {
+        //     Alert.alert("Invalid Input", "Please select scope of work");
+        //     return;
+        // }
+
+        if (categoryId == "") {
+            Alert.alert("Invalid Input", "Please select category");
             return;
         }
 
@@ -313,18 +353,26 @@ const SalesEditScreen = ({ props, navigation }) => {
             return;
         }
 
+        if (vendorContact[0] != "+") {
+            if(countryCode == null)
+            {
+                Alert.alert("Invalid Input", "Please define the country code by selecting or manual key in");
+                return;
+            }
+        }
 
         let workSchedule = {
             project_id: item.id,
             vendor_id: vendor_id || null,
             vendor_free_text: vendorFreeText || null,
-            vendor_contact: vendorContact,
+            vendor_contact: vendorContact[0] == "+"  ? vendorContact : countryCode+vendorContact,
             venue,
             sow_id: sowId,
             scope_of_work: finalSOW,
             start_date,
             end_date,
-            remark
+            category_id: categoryId,
+            remark: remark || "-"
         }
         addProjectWorkSchedule(workSchedule)
             .then(setWorkSchedules([...workSchedules, workSchedule]))
@@ -332,6 +380,7 @@ const SalesEditScreen = ({ props, navigation }) => {
             .then(
                 () => {
                     setSowId("");
+                    setCategoryId("");
                     setSOW("");
                     setVendorFreeText("");
                     setVendor("");
@@ -344,9 +393,20 @@ const SalesEditScreen = ({ props, navigation }) => {
                 });
     }
 
+    const copyWSContent = () => {
+        let msgContent = `*Work schedule*\nCompany: ${item.company.name}\n${item.designer.name}\n+${item.designer.country_code}${item.designer.phone}\nWhatsApp\nhttps://wa.me/+${item.designer.country_code}${item.designer.phone}\nSite Add: ${venue}\nStart Date: ${WSContent.start_date}\nEnd Date: ${WSContent.end_date}\nScope of Work: ${WSContent.scope_of_work}\nNote: ${WSContent.remark}`;
+        Clipboard.setString(msgContent);
+        Toast.show('Work Schedule content has been copied', {
+            duration: Toast.durations.LONG,
+            position: Toast.positions.BOTTOM,
+        });
+
+        toggleWSClick();
+    }
+
     useEffect(() => {
         initVendor();
-    }, [sowId, item.id]);
+    }, [categoryId, item.id]);
 
     useEffect(() => {
 
@@ -358,6 +418,7 @@ const SalesEditScreen = ({ props, navigation }) => {
 
         // SET VENDOR CONTACT OPTION
         if (filteredObject.length > 0 && filteredObject != null) {
+            setVendorContactOption([]);
             // Rebuild
             filteredObject[0].contact_number?.map((value, index) => {
                 setVendorContactOption((oldValue) => [
@@ -428,8 +489,8 @@ const SalesEditScreen = ({ props, navigation }) => {
 
     // Validate phone number
     const validatePhoneNumber = (phone) => {
-        var removedStrips = phone.replace(/-/g,"");
-        var removedSpace = removedStrips.replace(/\s/g,"");
+        var removedStrips = phone.replace(/-/g, "");
+        var removedSpace = removedStrips.replace(/\s/g, "");
 
         setVendorContact(removedSpace);
     }
@@ -438,19 +499,29 @@ const SalesEditScreen = ({ props, navigation }) => {
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (contactSearch) {
-                var filteredContact = contactList?.filter( item => {
+                var filteredContact = contactList?.filter(item => {
                     return item.name.includes(contactSearch);
                 });
 
                 setFilteredContact(filteredContact);
             }
-            else{
+            else {
                 setFilteredContact([]);
             }
         }, 1000)
 
         return () => clearTimeout(delayDebounceFn)
     }, [contactSearch])
+
+    // Show red alert on invalid phone number
+    useEffect(() => {
+        if (vendorContact[0] != "+") {
+            setIsValidPhone(false);
+        }
+        else {
+            setIsValidPhone(true);
+        }
+    }, [vendorContact, item.id]);
 
     return (
         <View
@@ -464,121 +535,162 @@ const SalesEditScreen = ({ props, navigation }) => {
             {/* CONTACT LIST */}
             <LoadingState isUploading={isFetchingContact} content="Fetching contacts..." />
             <SafeAreaView>
-            <Overlay
-                isVisible={contactToggle}
-                onBackdropPress={toggleContact}
-                overlayStyle={{ width: '80%', maxHeight:'80%', overflow: 'hidden' }}
-            >
-                {/* <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "position" : ""} keyboardVerticalOffset={Platform.OS === "ios" ? 84 : 0} enabled={true}> */}
+                <Overlay
+                    isVisible={contactToggle}
+                    onBackdropPress={toggleContact}
+                    overlayStyle={{ width: '80%', maxHeight: '80%', overflow: 'hidden' }}
+                >
+                    {/* <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "position" : ""} keyboardVerticalOffset={Platform.OS === "ios" ? 84 : 0} enabled={true}> */}
                     <TextField placeholder="Search Contact Name" editable={true} label="Search" value={contactSearch} onChange={contactSearch => setContactSearch(contactSearch)} />
                     <FlatList
-                        style={{maxHeight:'80%', overflow:'hidden'}}
+                        style={{ maxHeight: '80%', overflow: 'hidden' }}
                         // removeClippedSubviews={true}
                         initialNumToRender={25}
                         updateCellsBatchingPeriod={50}
-                        data={filteredContact.length > 0 ? filteredContact.sort((a, b) => a.name > b.name ? 1 : -1) : contactList.sort((a, b) => a.name > b.name ? 1 : -1) }
+                        data={filteredContact.length > 0 ? filteredContact.sort((a, b) => a.name > b.name ? 1 : -1) : contactList.sort((a, b) => a.name > b.name ? 1 : -1)}
                         renderItem={renderContactItem}
                         keyExtractor={(item) => item.phone}
                     />
-                {/* </KeyboardAvoidingView> */}
-            </Overlay>
+                    {/* </KeyboardAvoidingView> */}
+                </Overlay>
+            </SafeAreaView>
+            {/* WS CLICK */}
+            <SafeAreaView>
+                <Overlay
+                    isVisible={WSToggle}
+                    onBackdropPress={toggleWSClick}
+                    overlayStyle={{ width: '80%', maxHeight: '80%', overflow: 'hidden' }}
+                >
+                    <DefaultButton textButton="Copy" onPress={copyWSContent} />
+                    <DefaultButton textButton="Send" onPress={() => {sendWSWhatsappNotification(WSid); toggleWSClick();}} />
+                </Overlay>
             </SafeAreaView>
             {/* REMARK WORK SCHEDULE */}
             <SafeAreaView>
-            <Overlay
-                isVisible={visible}
-                onBackdropPress={toggleOverlay}
-                overlayStyle={{ width: '80%', overflow: 'hidden' }}
-            >
-                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "position" : ""} keyboardVerticalOffset={Platform.OS === "ios" ? 84 : 0} enabled={true}>
-                    <ScrollView style={{ height:'80%', overflow: 'hidden' }}>
-                        <Text style={{ fontSize: 20, color: 'grey' }}>Schedule Details</Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                            <View style={{ width: '49%' }}>
-                                <DatePicker required={true} label="Start Date" initialDate={start_date || null} key='DATE_START_1' onChange={startDate => setStartDate(startDate)} />
+                <Overlay
+                    isVisible={visible}
+                    onBackdropPress={toggleOverlay}
+                    overlayStyle={{ width: '80%', overflow: 'hidden' }}
+                >
+                    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "position" : ""} keyboardVerticalOffset={Platform.OS === "ios" ? 84 : 0} enabled={true}>
+                        <ScrollView style={{ height: '80%', overflow: 'hidden' }}>
+                            <Text style={{ fontSize: 20, color: 'grey' }}>Schedule Details</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                                <View style={{ width: '49%' }}>
+                                    <DatePicker required={true} label="Start Date" initialDate={start_date || null} key='DATE_START_1' onChange={startDate => setStartDate(startDate)} />
+                                </View>
+                                <View style={{ width: '49%' }}>
+                                    <DatePicker required={true} label="End Date" initialDate={end_date || null} key='DATE_END_1' onChange={endDate => setEndDate(endDate)} />
+                                </View>
                             </View>
-                            <View style={{ width: '49%' }}>
-                                <DatePicker required={true} label="End Date" initialDate={end_date || null} key='DATE_END_1' onChange={endDate => setEndDate(endDate)} />
-                            </View>
-                        </View>
+                            <LongText
+                                key='WS_VENUE'
+                                label="Venue"
+                                value={venue}
+                                required={true}
+                                onChange={venue => setVenue(venue)}
+                            />
+                            {/* <TextField placeholder="Venue" required={true} editable={true} label="Venue" value={venue} onChange={venue => setVenue(venue)} /> */}
 
-                        <TextField placeholder="Venue" required={true} editable={true} label="Venue" value={venue} onChange={venue => setVenue(venue)} />
+                            <SelectPicker
+                                label="Category"
+                                required={true}
+                                selectedValue={categoryId}
+                                onSelect={(categoryId) => { setCategoryId(categoryId);}}
+                                options={categoryOptions}
+                            />
 
-                        <SelectPicker
-                            label="Scope of Work"
-                            required={true}
-                            selectedValue={sowId}
-                            onSelect={(sow, index) => { setSOW(sowOptions[index - 1]?.label); setSowId(sow); console.log(sow) }}
-                            options={sowOptions}
-                        />
+                            {/* <SelectPicker
+                                label="Scope of Work"
+                                required={true}
+                                selectedValue={sowId}
+                                onSelect={(sow, index) => { setSOW(sowOptions[index - 1]?.label); setSowId(sow); console.log(sow) }}
+                                options={sowOptions}
+                            /> */}
 
-                        <SelectPicker
-                            label="Vendor"
-                            required={true}
-                            selectedValue={vendor_id}
-                            onSelect={vendorId => setVendor(vendorId)}
-                            options={vendorOption}
-                        />
+                            <SelectPicker
+                                label="Vendor"
+                                required={true}
+                                selectedValue={vendor_id}
+                                onSelect={vendorId => setVendor(vendorId)}
+                                options={vendorOption}
+                            />
 
-                        <TextField label="Add free text vendor" value={vendorFreeText} onChange={data => setVendorFreeText(data)} />
-                        {
-                            vendorContactOption.length > 0 && (
-                                <SelectPicker
-                                    label="Select Vendor Contact"
-                                    required={false}
-                                    selectedValue={selectedVendorContact}
-                                    onSelect={contact => {setSelectedVendorContact(contact); setVendorContact(contact || vendorContact)}}
-                                    options={vendorContactOption}
-                                />
-                            )
-                        }
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <View style={{ width: '74%' }}>
-                                <TextField
-                                    placeholder="+65XXXXXXXX"
-                                    required={false}
-                                    label="Vendor Contact No."
-                                    value={vendorContact}
-                                    onChange={data => {validatePhoneNumber(data); setSelectedVendorContact("")}}
-                                />
-                            </View>
-                            <View style={{ width: '24%' }}>
-                                <TouchableOpacity onPress={getContactFromPhone}>
-                                    <View style={{ marginTop:Platform.OS === "android" ? 42 : 37, justifyContent: 'center', alignContent: 'center' }}>
-                                        <View style={{ marginBottom: 5 }} />
-                                        <View style={{
-                                            backgroundColor: '#fff', height: 40, elevation: 1, borderWidth: 1,
-                                            borderColor: 'gray',
-                                            borderRadius: 4,
-                                            justifyContent: 'center',
-                                            alignContent: 'center'
-                                        }}>
-                                            <Icon name="contacts" size={30} style={{ alignItems: 'center' }} />
+                            <TextField label="Add free text vendor" value={vendorFreeText} onChange={data => setVendorFreeText(data)} />
+                            {
+                                vendorContactOption.length > 0 && (
+                                    <SelectPicker
+                                        label="Select Vendor Contact"
+                                        required={false}
+                                        selectedValue={selectedVendorContact}
+                                        onSelect={contact => { setSelectedVendorContact(contact); setVendorContact(contact || vendorContact) }}
+                                        options={vendorContactOption}
+                                    />
+                                )
+                            }
+
+                            <Text style={{marginTop:20, marginBottom:-20}}>Vendor Contact No.</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View style={{ width: "30%" }}>
+                                    <SelectPicker
+                                        // label="Country Code"
+                                        required={false}
+                                        selectedValue={countryCode}
+                                        onSelect={code => {setCountryCodes(code)}}
+                                        options={countryCodeOption}
+                                    />
+                                </View>
+                                <View style={{ width: '50%' }}>
+                                    <TextField
+                                        keyboardType="phone-pad"
+                                        required={false}
+                                        // label="Vendor Contact No."
+                                        value={vendorContact}
+                                        onChange={data => { validatePhoneNumber(data); setSelectedVendorContact("") }}
+                                    />
+
+                                </View>
+                                <View style={{ width: '15%' }}>
+                                    <TouchableOpacity onPress={getContactFromPhone}>
+                                        <View style={{ marginTop: Platform.OS === "android" ? 20 : 20, justifyContent: 'center', alignContent: 'center' }}>
+                                            <View style={{ marginBottom: 5 }} />
+                                            <View style={{
+                                                backgroundColor: '#fff', height: 40, elevation: 1, borderWidth: 1,
+                                                borderColor: 'gray',
+                                                borderRadius: 4,
+                                                justifyContent: 'center',
+                                                alignContent: 'center'
+                                            }}>
+                                                <Icon name="contacts" size={30} style={{ alignItems: 'center' }} />
+                                            </View>
                                         </View>
-                                    </View>
-                                </TouchableOpacity>
+                                    </TouchableOpacity>
+                                </View>
+
                             </View>
-                        </View>
+                            {
+                                (isValidPhone == false && countryCode == null) && <Text style={{ "color": "red" }}>Please specify country code</Text>
+                            }
 
-                        <TextField
-                            key='SOW_OTHER'
-                            label="Other Scope of Work"
-                            value={other_sow}
-                            onChange={otherSOW => setOtherSOW(otherSOW)}
-                        />
+                            <TextField
+                                key='SOW_OTHER'
+                                label="Other Scope of Work"
+                                value={other_sow}
+                                onChange={otherSOW => setOtherSOW(otherSOW)}
+                            />
 
-                        <LongText
-                            key='WS_REMARK'
-                            label="Remark"
-                            value={remark}
-                            onChange={remark => setRemark(remark)}
-                        />
+                            <LongText
+                                key='WS_REMARK'
+                                label="Remark"
+                                value={remark}
+                                onChange={remark => setRemark(remark)}
+                            />
 
 
-                    </ScrollView>
-                    <DefaultButton textButton="SAVE DETAILS" onPress={addWorkSchedule} />
-                </KeyboardAvoidingView>
-            </Overlay>
+                        </ScrollView>
+                        <DefaultButton textButton="SAVE DETAILS" onPress={addWorkSchedule} />
+                    </KeyboardAvoidingView>
+                </Overlay>
             </SafeAreaView>
 
             {/* REMARK MODAL */}
@@ -790,7 +902,7 @@ const SalesEditScreen = ({ props, navigation }) => {
                 <View style={{ flexDirection: 'column' }}>
                     {
                         data.work_schedules && data.work_schedules.map((item, index) => {
-                            return (<WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />)
+                            return (<WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => { toggleWSClick(); setWSContent(item); setWSid(item.id) }} />)
                         })
                     }
                 </View>

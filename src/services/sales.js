@@ -2,7 +2,7 @@ import { Alert } from 'react-native'; // to show alerts in app
 import api from '../api/api';
 import { store } from '../store/store';
 import moment from 'moment';
-
+import Toast from 'react-native-root-toast';
 export function getSalesList(status = '', start_date = '', end_date = '', needAttention = "no-need") {
     return api.get(`/projects?status=${status}&start_date=${start_date}&end_date=${end_date}&needAttention=${needAttention}`, {
         headers: {
@@ -30,7 +30,7 @@ export function getSingleProject(project_id) {
 }
 
 export function addProjectWorkSchedule(data) {
-    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work, sow_id, vendor_free_text, vendor_contact,remark } = data;
+    const { project_id, vendor_id, start_date, end_date, venue, scope_of_work, sow_id, vendor_free_text, vendor_contact,remark, category_id } = data;
     return api.post('/work-schedules',
         {
             project_id,
@@ -42,7 +42,8 @@ export function addProjectWorkSchedule(data) {
             start_date,
             end_date,
             sow_id,
-            remark
+            remark,
+            category_id
         },
         {
             headers: {
@@ -55,6 +56,32 @@ export function addProjectWorkSchedule(data) {
         .catch((error) => {
             Alert.alert("Add work schedule error", error.response.message);
             console.log(error.response);
+        })
+}
+
+export function sendWSWhatsappNotification(ws_id) {
+    return api.post('/work-schedules/send-notification',
+        {
+            ws_id
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${store.getState().loginReducer.token}`
+            }
+        })
+        .then((data) => {
+            Toast.show(data.data.message, {
+                duration: Toast.durations.LONG,
+                position: Toast.positions.BOTTOM,
+            });
+        })
+        .catch((error) => {
+            console.log(error.response.data.message);
+            Toast.show(error.response.data.message, {
+                style: {'backgroundColor':'red'},
+                duration: Toast.durations.LONG,
+                position: Toast.positions.BOTTOM,
+            });
         })
 }
 

@@ -146,3 +146,25 @@ export const getCompanyTerms = (company_id,property_type_id) => {
     .then((data) => {return data.data})
     .catch(err => console.log(err));
 }
+
+export const getCategory = () => {
+    return api.get(`/get-category`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}
+
+export const getVendorByCategory = (category_id) => {
+    return api.get(`/get-vendor-by-category/${category_id}`, {
+        headers: {
+            Authorization: `Bearer ${store.getState().loginReducer.token}`
+        }
+    }) 
+    .then(response => response)
+    .then((data) => {return data.data})
+    .catch(err => console.log(err));
+}

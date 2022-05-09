@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import Accordion from 'react-native-collapsible/Accordion';
 import QuoAgree from '../../components/Sales/QuoAgree';
 import Icon2 from 'react-native-vector-icons/SimpleLineIcons';
-import { getSingleProject } from '../../services/sales';
+import { getSingleProject, sendWSWhatsappNotification } from '../../services/sales';
 import WorkSchedule from '../../components/Sales/WorkSchedule';
 import SupplierInvoice from '../../components/Sales/SupplierInvoice';
 import { DOC_PREFIX_URL } from '../../constants/URL';
@@ -24,6 +24,8 @@ import GeneralDocument from '../../components/Sales/GeneralDocument';
 import * as WebBrowser from 'expo-web-browser';
 import Invoice from '../../components/Sales/Invoice';
 import Handover from '../../components/Sales/Handover';
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-root-toast';
 const SalesViewScreen = ({ navigation }) => {
     const { item } = navigation.state.params;
 
@@ -38,8 +40,28 @@ const SalesViewScreen = ({ navigation }) => {
     const [show, setShow] = useState(false);
     const [activeSections, setActiveSections] = useState([]);
 
+    // WS Popup
+    const [WSToggle, setWSToggle] = useState(false);
+    const [WSContent, setWSContent] = useState([]);
+    const [WSid, setWSid] = useState("");
+
     const viewGeneralDoc = async (url) => {
         await WebBrowser.openBrowserAsync(url);
+    }
+
+    const toggleWSClick = () => {
+        setWSToggle(!WSToggle);
+    }
+
+    const copyWSContent = () => {
+        let msgContent = `*Work schedule*\nCompany: ${item.company.name}\n${item.designer.name}\n+${item.designer.country_code}${item.designer.phone}\nWhatsApp\nhttps://wa.me/+${item.designer.country_code}${item.designer.phone}\nSite Add: ${WSContent.venue}\nStart Date: ${WSContent.start_date}\nEnd Date: ${WSContent.end_date}\nScope of Work: ${WSContent.scope_of_work}\nNote: ${WSContent.remark}`;
+        Clipboard.setString(msgContent);
+        Toast.show('Work Schedule content has been copied', {
+            duration: Toast.durations.LONG,
+            position: Toast.positions.BOTTOM,
+        });
+
+        toggleWSClick();
     }
 
     const SECTIONS = [
@@ -329,7 +351,7 @@ const SalesViewScreen = ({ navigation }) => {
     };
 
     const renderWS = ({ item, index }) => (
-        <WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => console.log(index + 1)} />
+        <WorkSchedule key={index + 1} item={item} no={index + 1} onViewPress={() => { toggleWSClick(); setWSContent(item); setWSid(item.id) }} />
     )
 
 
@@ -341,6 +363,18 @@ const SalesViewScreen = ({ navigation }) => {
             //padding: 20,
             backgroundColor: '#F3F3F3',
         }}>
+            
+            {/* WS CLICK */}
+            <SafeAreaView>
+                <Overlay
+                    isVisible={WSToggle}
+                    onBackdropPress={toggleWSClick}
+                    overlayStyle={{ width: '80%', maxHeight: '80%', overflow: 'hidden' }}
+                >
+                    <DefaultButton textButton="Copy" onPress={copyWSContent} />
+                    <DefaultButton textButton="Send" onPress={() => {sendWSWhatsappNotification(WSid); toggleWSClick();}} />
+                </Overlay>
+            </SafeAreaView>
             <View style={{ flexDirection: 'row', padding: 20 }}>
                 <View style={{ width: '50%' }}>
                     <Text style={{ fontSize: 20 }}>Project: {projectData?.client_name}</Text>
